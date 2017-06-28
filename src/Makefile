@@ -44,7 +44,7 @@ BOOT_DIR=bootloader
 OMV_QSTR_DEFS = $(TOP_DIR)/$(OMV_DIR)/py/qstrdefsomv.h
 
 # Target
-TARGET ?= OPENMV2
+TARGET ?= OPENMV3
 FW_DIR=$(TOP_DIR)/../firmware/$(TARGET)
 
 # Debugging/Optimization

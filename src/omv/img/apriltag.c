@@ -1539,6 +1539,13 @@ typedef struct
  **/
 matd_svd_t matd_svd(matd_t *A);
 
+/** Use the SVD calculated above to calculate the Moore-Penrose Pseudo-Inverse
+ * There are two types of MP Pseudo-Inverse - since the above works for tall matrices,
+ * we calculate the Left Pseudo-Inverse
+ **/
+matd_t *matd_MP_pseudo_inverse(matd_svd_t *USV);
+
+
 #define MATD_SVD_NO_WARNINGS 1
     matd_svd_t matd_svd_flags(matd_t *A, int flags);
 
@@ -3012,6 +3019,28 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
 
     return res;
 }
+
+matd_t* matd_MP_pseudo_inverse(matd_svd_t* USV)
+{
+    double dt1[48] = {1,2,3,4,5,6,7,8,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13};//5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13
+
+    matd_t *matd_create_dataf(int rows, int cols, const float *data);
+
+
+    matd_t *ret = matd_create(USV->V->nrows,USV->V->nrows);
+    matd_t *Splus = matd_create(USV->S->ncols,USV->S->nrows);
+
+    for (int i=0; i<Splus->nrows;i++)
+    {
+        MATD_EL(Splus,i,i) = (fabs(MATD_EL(Splus,i,i)) < MATD_EPS) ? 0 : (1/MATD_EL(Splus,i,i));
+    }
+
+    ret = matd_op("M*M*M", USV->V, Splus, matd_transpose(USV->U));
+
+    return ret;//
+}//end matd_MP_pseudo_inverse
+
+
 
 matd_svd_t matd_svd(matd_t *A)
 {
@@ -11892,16 +11921,6 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
             rectangle_init(&temp, fast_roundf(det->p[k][0]) + roi->x, fast_roundf(det->p[k][1]) + roi->y, 0, 0);
             rectangle_united(&(lnk_data.rect), &temp);
         }
-
-        // Add corners...
-        lnk_data.corners[0].x = fast_roundf(det->p[3][0]) + roi->x; // top-left
-        lnk_data.corners[0].y = fast_roundf(det->p[3][1]) + roi->y; // top-left
-        lnk_data.corners[1].x = fast_roundf(det->p[2][0]) + roi->x; // top-right
-        lnk_data.corners[1].y = fast_roundf(det->p[2][1]) + roi->y; // top-right
-        lnk_data.corners[2].x = fast_roundf(det->p[1][0]) + roi->x; // bottom-right
-        lnk_data.corners[2].y = fast_roundf(det->p[1][1]) + roi->y; // bottom-right
-        lnk_data.corners[3].x = fast_roundf(det->p[0][0]) + roi->x; // bottom-left
-        lnk_data.corners[3].y = fast_roundf(det->p[0][1]) + roi->y; // bottom-left
 
         lnk_data.id = det->id;
         lnk_data.family = 0;
