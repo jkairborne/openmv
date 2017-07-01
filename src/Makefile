@@ -162,6 +162,7 @@ FIRM_OBJ += $(addprefix $(BUILD)/$(OMV_DIR)/img/,\
 	mean.o                                  \
 	mode.o                                  \
 	median.o                                \
+        mymodule.o                              \
 	pool.o                                  \
 	point.o                                 \
 	rectangle.o                             \
@@ -368,6 +369,8 @@ all: $(OPENMV)
 
 $(BUILD):
 	$(MKDIR) -p $@
+
+$(MAKE) :
 
 BOOTLOADER_OBJS: FIRMWARE_OBJS
 	$(MAKE)  -C $(BOOT_DIR)           BUILD=$(BUILD)/$(BOOT_DIR)

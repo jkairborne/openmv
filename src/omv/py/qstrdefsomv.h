@@ -344,6 +344,11 @@ Q(CPUFREQ_216MHZ)
 Q(get_frequency)
 Q(set_frequency)
 
+Q(mymodule)
+Q(hello)
+Q(mp_PI)
+Q(tst1)
+
 // Lens Correction
 Q(lens_corr)
 Q(strength)

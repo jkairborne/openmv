@@ -6,6 +6,7 @@
 #include <float.h>
 #include <stdarg.h>
 #include "imlib.h"
+#include "mavlink/common/mavlink.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -3022,17 +3023,13 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
 
 matd_t* matd_MP_pseudo_inverse(matd_svd_t* USV)
 {
-    double dt1[48] = {1,2,3,4,5,6,7,8,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13};//5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13
-
-    matd_t *matd_create_dataf(int rows, int cols, const float *data);
-
-
     matd_t *ret = matd_create(USV->V->nrows,USV->V->nrows);
     matd_t *Splus = matd_create(USV->S->ncols,USV->S->nrows);
-
+    printf("IN THE MP_pseudo_inverse");
     for (int i=0; i<Splus->nrows;i++)
     {
         MATD_EL(Splus,i,i) = (fabs(MATD_EL(Splus,i,i)) < MATD_EPS) ? 0 : (1/MATD_EL(Splus,i,i));
+        printf("testing 1");
     }
 
     ret = matd_op("M*M*M", USV->V, Splus, matd_transpose(USV->U));
@@ -5475,6 +5472,7 @@ struct apriltag_detection
     // The corners of the tag in image pixel coordinates. These always
     // wrap counter-clock wise around the tag.
     double p[4][2];
+  //  float mp_pi[8][6];
 };
 
 // don't forget to add a family!
@@ -11957,16 +11955,45 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
 
         matd_t *pose = homography_to_pose(det->H, -fx, fy, cx, cy);
 
+
+        double dt1[48] = {1,2,3,4,5,6,7,8,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13};
+        matd_t* tst1;
+        tst1 = matd_create_data(8,6,dt1);
+        matd_svd_t intofct;
+        intofct = matd_svd(tst1);
+
+        for(int i=0;i<8;i++){
+            for(int j=0;j<6;j++){
+                lnk_data.tst1[i][j] = MATD_EL(tst1,i,j);
+                printf("In the function");
+            }
+        }
+
+//        double dt1[64] =  {1,2,3,4,5,6,7,8,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13,7,8,9,10,11,12,13,14,8,9,10,11,12,13,14,15};
+//        matd_t* rndm = matd_create_data(8,8,dt1);
+        matd_t* rndm = matd_MP_pseudo_inverse(&intofct);
+
+        for(int i=0;i<8;i++){
+            for(int j=0;j<8;j++){
+                lnk_data.mp_PI[i][j] = MATD_EL(rndm,i,j);
+            }//end for
+        }//end for
+
+
         lnk_data.x_translation = MATD_EL(pose, 0, 3);
         lnk_data.y_translation = MATD_EL(pose, 1, 3);
         lnk_data.z_translation = MATD_EL(pose, 2, 3);
         lnk_data.x_rotation = fast_atan2f(MATD_EL(pose, 2, 1), MATD_EL(pose, 2, 2));
         lnk_data.y_rotation = fast_atan2f(-MATD_EL(pose, 2, 0), fast_sqrtf(sq(MATD_EL(pose, 2, 1)) + sq(MATD_EL(pose, 2, 2))));
         lnk_data.z_rotation = -fast_atan2f(MATD_EL(pose, 1, 0), MATD_EL(pose, 0, 0));
-
+        //lnk_data.mp_PI = det->mp_pi;
         matd_destroy(pose);
 
+
+
+
         list_push_back(out, &lnk_data);
+
     }
 
     apriltag_detections_destroy(detections);
@@ -11974,5 +12001,6 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
     apriltag_detector_destroy(td);
     fb_free(); // umm_init_x();
 }
+
 
 #pragma GCC diagnostic pop
