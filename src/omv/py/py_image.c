@@ -2801,7 +2801,7 @@ static mp_obj_t py_image_find_apriltags(uint n_args, const mp_obj_t *args, mp_ma
         o->x_rotation = mp_obj_new_float(lnk_data.x_rotation);
         o->y_rotation = mp_obj_new_float(lnk_data.y_rotation);
         o->z_rotation = mp_obj_new_float(lnk_data.z_rotation);
-
+//8x8
         o->mp_PI = mp_obj_new_tuple(8, (mp_obj_t [])
             {mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.mp_PI[0][0]), mp_obj_new_int(lnk_data.mp_PI[1][0]),mp_obj_new_int(lnk_data.mp_PI[2][0]),mp_obj_new_int(lnk_data.mp_PI[3][0]),mp_obj_new_int(lnk_data.mp_PI[4][0]),mp_obj_new_int(lnk_data.mp_PI[5][0]),mp_obj_new_int(lnk_data.mp_PI[6][0]),mp_obj_new_int(lnk_data.mp_PI[7][0])}),
              mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.mp_PI[0][1]), mp_obj_new_int(lnk_data.mp_PI[1][1]),mp_obj_new_int(lnk_data.mp_PI[2][1]),mp_obj_new_int(lnk_data.mp_PI[3][1]),mp_obj_new_int(lnk_data.mp_PI[4][1]),mp_obj_new_int(lnk_data.mp_PI[5][1]),mp_obj_new_int(lnk_data.mp_PI[6][1]),mp_obj_new_int(lnk_data.mp_PI[7][1])}),

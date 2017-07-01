@@ -3063,6 +3063,7 @@ matd_svd_t matd_svd_flags(matd_t *A, int flags)
         res.S = matd_transpose(tmp.S);
         res.V = tmp.U; //matd_transpose(tmp.U);
 
+
         matd_destroy(tmp.S);
         matd_destroy(At);
     }
@@ -11956,15 +11957,15 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
         matd_t *pose = homography_to_pose(det->H, -fx, fy, cx, cy);
 
 
-        double dt1[48] = {1,2,3,4,5,6,7,8,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13};
+//        double dt1[48] = {1,2,3,4,5,6,7,8,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13};
+        double dt1[48] = {1,2,3,4,5,6,2,3,4,5,6,7,3,4,5,6,7,8,4,5,6,7,8,9,5,6,7,8,9,10,6,7,8,9,10,11,7,8,9,10,11,12,8,9,10,11,12,13};
         matd_t* tst1;
         tst1 = matd_create_data(8,6,dt1);
-        matd_svd_t intofct;
-        intofct = matd_svd(tst1);
+        matd_svd_t intofct = matd_svd(tst1);
 
         for(int i=0;i<8;i++){
             for(int j=0;j<6;j++){
-                lnk_data.tst1[i][j] = MATD_EL(tst1,i,j);
+                lnk_data.tst1[i][j] = MATD_EL(intofct.V,i,j);
                 printf("In the function");
             }
         }
@@ -11975,7 +11976,7 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
 
         for(int i=0;i<8;i++){
             for(int j=0;j<8;j++){
-                lnk_data.mp_PI[i][j] = MATD_EL(rndm,i,j);
+                lnk_data.mp_PI[i][j] = MATD_EL(intofct.U,i,j);
             }//end for
         }//end for
 
