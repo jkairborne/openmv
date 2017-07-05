@@ -20,6 +20,8 @@
 #include "py_image.h"
 #include "omv_boardconfig.h"
 
+#include "stdio.h"
+
 static const mp_obj_type_t py_cascade_type;
 static const mp_obj_type_t py_image_type;
 
@@ -2546,7 +2548,7 @@ static mp_obj_t py_image_find_qrcodes(uint n_args, const mp_obj_t *args, mp_map_
     fb_alloc_mark();
     imlib_find_qrcodes(&out, arg_img, &roi);
     fb_alloc_free_till_mark();
-
+        printf("qrcode here\n");
     mp_obj_list_t *objects_list = mp_obj_new_list(list_size(&out), NULL);
     for (size_t i = 0; list_size(&out); i++) {
         find_qrcodes_list_lnk_data_t lnk_data;

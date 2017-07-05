@@ -4,6 +4,7 @@
  */
 
 #include "imlib.h"
+#include "stdio.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// "quirc.h"
@@ -2929,6 +2930,8 @@ void imlib_find_qrcodes(list_t *out, image_t *ptr, rectangle_t *roi)
     quirc_resize(controller, roi->w, roi->h);
     uint8_t *grayscale_image = quirc_begin(controller, NULL, NULL);
 
+    printf("second qr code\n");
+
     switch(ptr->bpp) {
         case IMAGE_BPP_BINARY: {
             for (int y = roi->y, yy = roi->y + roi->h; y < yy; y++) {
@@ -2965,7 +2968,6 @@ void imlib_find_qrcodes(list_t *out, image_t *ptr, rectangle_t *roi)
 
     quirc_end(controller);
     list_init(out, sizeof(find_qrcodes_list_lnk_data_t));
-
     for (int i = 0, j = quirc_count(controller); i < j; i++) {
         struct quirc_code *code = fb_alloc(sizeof(struct quirc_code));
         struct quirc_data *data = fb_alloc(sizeof(struct quirc_data));

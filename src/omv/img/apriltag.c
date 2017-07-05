@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include "imlib.h"
 #include "mavlink/common/mavlink.h"
+#include "stdio.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -216,7 +217,7 @@ loop:   SWAPINIT(a, es);
 #undef swap
 #undef vecswap
 
-#define printf(format, ...)
+
 #define fprintf(format, ...)
 #define free(ptr) ({ umm_free(ptr); })
 #define malloc(size) ({ void *_r = umm_malloc(size); if(!_r) fb_alloc_fail(); _r; })
@@ -1762,19 +1763,19 @@ matd_t *matd_select(const matd_t * a, int r0, int r1, int c0, int c1)
 
     return r;
 }
-
+/*
 void matd_print(const matd_t *m, const char *fmt)
 {
     assert(m != NULL);
     assert(fmt != NULL);
 
     if (matd_is_scalar(m)) {
-        printf(fmt, MATD_EL(m, 0, 0));
+        printf(fmt, (double) MATD_EL(m, 0, 0));
         printf("\n");
     } else {
         for (int i = 0; i < m->nrows; i++) {
             for (int j = 0; j < m->ncols; j++) {
-                printf(fmt, MATD_EL(m, i, j));
+                printf(fmt, (double) MATD_EL(m, i, j));
             }
             printf("\n");
         }
@@ -1798,7 +1799,7 @@ void matd_print_transpose(const matd_t *m, const char *fmt)
         }
     }
 }
-
+*/
 void matd_destroy(matd_t *m)
 {
     if (!m)
@@ -2943,8 +2944,8 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
     }
 
     if (!(flags & MATD_SVD_NO_WARNINGS) && iter == maxiters) {
-        printf("WARNING: maximum iters (maximum = %d, matrix %d x %d, max=%.15f)\n",
-               iter, A->nrows, A->ncols, maxv);
+        printf("WARNING: maximum iters (maximum = %d, matrix %d x %d)\n",
+               iter, A->nrows, A->ncols);
 
 //        matd_print(A, "%15f");
     }
@@ -3029,7 +3030,7 @@ matd_t* matd_MP_pseudo_inverse(matd_svd_t* USV)
     for (int i=0; i<Splus->nrows;i++)
     {
         MATD_EL(Splus,i,i) = (fabs(MATD_EL(Splus,i,i)) < MATD_EPS) ? 0 : (1/MATD_EL(Splus,i,i));
-        printf("testing 1");
+        //printf("testing 1");
     }
 
     ret = matd_op("M*M*M", USV->V, Splus, matd_transpose(USV->U));
@@ -11603,6 +11604,7 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
         printf("apriltag.c: No tag families enabled.");
         return s;
     }
+    printf("detecting me some apriltags");
 
     ///////////////////////////////////////////////////////////
     // Step 1. Detect quads according to requested image decimation
@@ -11838,6 +11840,8 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
     size_t fb_alloc_need = resolution * (1 + 1 + 4 + 2); // read above...
     umm_init_x(((fb_avail() - fb_alloc_need) / resolution) * resolution);
     apriltag_detector_t *td = apriltag_detector_create();
+
+    printf("Apriltag finally working? \n");
 
     if (families & TAG16H5) {
         apriltag_detector_add_family(td, (apriltag_family_t *) &tag16h5);

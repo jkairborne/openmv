@@ -6,6 +6,38 @@
 #include <stdio.h>
 
 
+typedef struct _mymodule_hello_obj_t {
+    mp_obj_base_t base;
+    uint8_t hello_number;
+} mymodule_hello_obj_t;
+
+/*
+mp_obj_t mymodule_hello_make_new(const mp_obj_type_t *type, size_t n_args,
+                                 size_t n_kw, const mp_obj_t *args) {
+    mp_arg_check_num(n_args, n_kw, 1, 1, true);
+    pyb_spi_obj_t *self = m_new_obj(mymodule_hello_obj_t);
+    self->base.type = &mymodule_hello_type;
+    self->hello_number = mp_obj_get_int(args[0])
+    return MP_OBJ_FROM_PTR(self);
+}
+
+
+STATIC void pyb_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+    pyb_spi_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_printf(print, "Hello(%u)", self->hello_number);
+}
+
+
+STATIC mp_obj_t mymodule_hello_increment(mp_obj_t self_in) {
+    pyb_spi_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    self->hello_number += 1;
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(mymodule_hello_increment_obj,
+                          mymodule_hello_increment);
+*/
+
+
 STATIC mp_obj_t mymodule_hello(mp_obj_t what) {
     printf("Hello %s!\n", mp_obj_str_get_str(what));
     return mp_const_none;
@@ -24,3 +56,19 @@ const mp_obj_module_t mp_module_mymodule = {
     .name = MP_QSTR_mymodule,
     .globals = (mp_obj_dict_t*)&mp_module_mymodule_globals,
 };
+
+/*
+STATIC const mp_rom_map_elem_t mymodule_hello_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&mymodule_hello_increment_obj) }
+}
+STATIC MP_DEFINE_CONST_DICT(mymodule_hello_locals_dict,
+                            mymodule_hello_locals_dict_table);
+
+const mp_obj_type_t mymodule_hello_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_Hello,
+    .print = mymodule_hello_print,
+    .make_new = mymodule_hello_make_new,
+    .locals_dict = (mp_obj_dict_t*)&mymodule_hello_locals_dict,
+};
+*/
