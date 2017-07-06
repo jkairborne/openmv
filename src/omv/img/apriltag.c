@@ -3030,62 +3030,15 @@ matd_t *matd_MP_pseudo_inverse(matd_svd_t* USV)
     matd_t *Splus = matd_create(USV->U->ncols,USV->V->ncols);
     for (int i=0; i<Splus->ncols;i++)
     {
- /*       printf("values: %d %d", ((int) (10000*MATD_EL(USV->S,i,i))),((int) (10000*MATD_EPS)));
-        if (fabs(MATD_EL(USV->S,i,i)) < 0.001){
-            MATD_EL(Splus,i,i) = 0;
-            printf("in the if\n");
-        }
-        else {
-            MATD_EL(Splus,i,i) = 1/(MATD_EL(USV->S,i,i));
-            printf("in the else");
-        }
-*/
         MATD_EL(Splus,i,i) = (fabs(MATD_EL(USV->S,i,i)) < 0.001) ? 0 : (1/MATD_EL(USV->S,i,i));
     }
 
-
-    printf("U :\n");
-    for(int i=0;i<8;i++){
-        for(int j=0;j<8;j++){
-            int dummy  = 10000*MATD_EL(USV->U,i,j);
-            printf("%d ",dummy);
-        }
-        printf("\n");
-    }
-
-    printf("Splus :\n");
-    for(int i=0;i<6;i++){
-        for(int j=0;j<8;j++){
-            int dummy  = 10000*MATD_EL(Splus,j,i);
-            printf("%d ",dummy);
-        }
-        printf("\n");
-    }
-    printf("V :\n");
-    for(int i=0;i<6;i++){
-        for(int j=0;j<6;j++){
-            int dummy  = 10000*MATD_EL(USV->V,i,j);
-            printf("%d ",dummy);
-
-        }
-        printf("\n");
-    }
-
-    matd_t *tst2 = matd_identity(8);
-    matd_t *tst3 = matd_identity(8);
-//    ret = matd_op("M'*M",tst2,tst3);
-
     ret = matd_op("M*M*M'", USV->V, Splus, USV->U);
-    printf("ret :\n");
-    for(int i=0;i<6;i++){
-        for(int j=0;j<8;j++){
-            int dummy  = 10000*MATD_EL(ret,i,j);
-            printf("%d ",dummy);
-        }
-        printf("\n");
-    }
 
-
+    matd_destroy(USV->S);
+    matd_destroy(USV->V);
+    matd_destroy(USV->U);
+    matd_destroy(Splus);
 
     return ret;//
 }//end matd_MP_pseudo_inverse
@@ -12008,43 +11961,6 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
         lnk_data.decision_margin = det->decision_margin / 255.0; // scale to [0:1]
 
         matd_t *pose = homography_to_pose(det->H, -fx, fy, cx, cy);
-
-
-//        double dt1[48] = {1,2,3,4,5,6,7,8,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13};
-        double dt1[48] = {1,2,3,4,5,6,2,3,4,5,6,7,3,4,5,6,7,8,4,5,6,7,8,9,5,6,7,8,9,10,6,7,8,9,10,11,7,8,9,10,11,12,8,9,10,11,12,13};
-        matd_t* tst1;
-        tst1 = matd_create_data(8,6,dt1);
-        matd_svd_t intofct = matd_svd(tst1);
-
-
-//        double dt1[64] =  {1,2,3,4,5,6,7,8,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13,7,8,9,10,11,12,13,14,8,9,10,11,12,13,14,15};
-//        matd_t* rndm = matd_create_data(8,8,dt1);
-        matd_t *rndm = matd_MP_pseudo_inverse(&intofct);
-
-
-        /*
-        printf("The pseudo-inverse: \n");
-        for(int i=0;i<8;i++){
-
-            for(int j=0;j<8;j++){
-                int dummy  = 10000*MATD_EL(intofct.U,i,j);
-                printf("%d ",dummy);
-                lnk_data.mp_PI[i][j] = MATD_EL(intofct.U,i,j);
-            }//end for
-                printf("\n");
-        }//end for
-
-*/
-        printf("PI2 :\n");
-        for(int i=0;i<6;i++){
-            for(int j=0;j<8;j++){
-                int dummy  = 10000*MATD_EL(rndm,i,j);
-                printf("%d ",dummy);
-         //       lnk_data.tst1[i][j] = MATD_EL(intofct.V,i,j);
-            }
-            printf("\n");
-        }
-        printf("\n\nShould be last line \n\n");
 
         lnk_data.x_translation = MATD_EL(pose, 0, 3);
         lnk_data.y_translation = MATD_EL(pose, 1, 3);
