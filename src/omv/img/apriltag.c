@@ -6,6 +6,7 @@
 #include <float.h>
 #include <stdarg.h>
 #include "imlib.h"
+#include "stdio.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -215,14 +216,14 @@ loop:   SWAPINIT(a, es);
 #undef swap
 #undef vecswap
 
-#define printf(format, ...)
+//#define printf(format, ...)
 #define fprintf(format, ...)
 #define free(ptr) ({ umm_free(ptr); })
 #define malloc(size) ({ void *_r = umm_malloc(size); if(!_r) fb_alloc_fail(); _r; })
 #define realloc(ptr, size) ({ void *_r = umm_realloc((ptr), (size)); if(!_r) fb_alloc_fail(); _r; })
 #define calloc(num, item_size) ({ void *_r = umm_calloc((num), (item_size)); if(!_r) fb_alloc_fail(); _r; })
 #define assert(expression)
-#define double float
+//#define double float
 #undef DBL_MIN
 #define DBL_MIN FLT_MIN
 #undef DBL_MAX
@@ -807,7 +808,7 @@ static inline int dequals(double a, double b)
 
 static inline int dequals_mag(double a, double b, double thresh)
 {
-    return (fabs(a-b) < thresh);
+    return ((double) fabs(a-b) < thresh);
 }
 
 static inline int isq(int v)
@@ -856,13 +857,13 @@ static inline int irand(int bound)
 /** Map vin to [0, 2*PI) **/
 static inline double mod2pi_positive(double vin)
 {
-    return vin - M_TWOPI * floor(vin / M_TWOPI);
+    return vin - (double) M_TWOPI * floor(vin / (double) M_TWOPI);
 }
 
 /** Map vin to [-PI, PI) **/
 static inline double mod2pi(double vin)
 {
-    return mod2pi_positive(vin + M_PI) - M_PI;
+    return mod2pi_positive(vin + (double) M_PI) - (double) M_PI;
 }
 
 /** Return vin such that it is within PI degrees of ref **/
@@ -886,7 +887,7 @@ static inline double mod360(double vin)
 static inline int theta_to_int(double theta, int max)
 {
     theta = mod2pi_ref(M_PI, theta);
-    int v = (int) (theta / M_TWOPI * max);
+    int v = (int) (theta / (double) M_TWOPI * max);
 
     if (v == max)
         v = 0;
@@ -944,9 +945,9 @@ static inline int fltcmp (float f1, float f2)
 static inline int dblcmp (double d1, double d2)
 {
     double epsilon = d1-d2;
-    if (epsilon < 0.0)
+    if (epsilon < (double) 0.0)
         return -1;
-    else if (epsilon > 0.0)
+    else if (epsilon > (double) 0.0)
         return  1;
     else
         return  0;
@@ -2068,7 +2069,7 @@ matd_t *matd_inverse(const matd_t *x)
         if (x->data[0] == 0)
             return NULL;
 
-        return matd_create_scalar(1.0 / x->data[0]);
+        return matd_create_scalar((double) 1.0 / x->data[0]);
     }
 
     switch(x->nrows) {
@@ -2077,10 +2078,10 @@ matd_t *matd_inverse(const matd_t *x)
             if (det == 0)
                 return NULL;
 
-            double invdet = 1.0 / det;
+            double invdet = (double) 1.0 / det;
 
             m = matd_create(x->nrows, x->nrows);
-            MATD_EL(m, 0, 0) = 1.0 * invdet;
+            MATD_EL(m, 0, 0) = (double) 1.0 * invdet;
             return m;
         }
 
@@ -2089,7 +2090,7 @@ matd_t *matd_inverse(const matd_t *x)
             if (det == 0)
                 return NULL;
 
-            double invdet = 1.0 / det;
+            double invdet = (double) 1.0 / det;
 
             m = matd_create(x->nrows, x->nrows);
             MATD_EL(m, 0, 0) = MATD_EL(x, 1, 1) * invdet;
@@ -2611,9 +2612,9 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
 
             double oldv0 = v[0];
             if (oldv0 < 0)
-                v[0] -= sqrt(mag2);
+                v[0] -= (double) sqrt(mag2);
             else
-                v[0] += sqrt(mag2);
+                v[0] += (double) sqrt(mag2);
 
             mag2 += -oldv0*oldv0 + v[0]*v[0];
 
@@ -2668,9 +2669,9 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
 
             double oldv0 = v[0];
             if (oldv0 < 0)
-                v[0] -= sqrt(mag2);
+                v[0] -= (double) sqrt(mag2);
             else
-                v[0] += sqrt(mag2);
+                v[0] += (double) sqrt(mag2);
 
             mag2 += -oldv0*oldv0 + v[0]*v[0];
 
@@ -3161,7 +3162,7 @@ matd_plu_t *matd_plu(const matd_t *a)
         }
 
         if (j < lu->ncols && j < lu->nrows && LUjj != 0) {
-            LUjj = 1.0 / LUjj;
+            LUjj = (double) 1.0 / LUjj;
             for (int i = j+1; i < lu->nrows; i++)
                 MATD_EL(lu, i, j) *= LUjj;
         }
@@ -3261,7 +3262,7 @@ matd_t *matd_plu_solve(const matd_plu_t *mlu, const matd_t *b)
 
     // solve Ux = y
     for (int k = mlu->lu->ncols-1; k >= 0; k--) {
-        double LUkk = 1.0 / MATD_EL(mlu->lu, k, k);
+        double LUkk = (double) 1.0 / MATD_EL(mlu->lu, k, k);
         for (int t = 0; t < b->ncols; t++)
             MATD_EL(x, k, t) *= LUkk;
 
@@ -3456,7 +3457,7 @@ MATD_EL(U, i, j) = 0;
         double d = MATD_EL(U, i, i);
         is_spd &= (d > 0);
 
-        if (d < MATD_EPS)
+        if (d < (double) MATD_EPS)
             d = MATD_EPS;
         d = 1.0 / sqrt(d);
 
@@ -3559,7 +3560,7 @@ matd_t *matd_chol_solve(const matd_chol_t *chol, const matd_t *b)
 
     // solve Ux = y
     for (int k = u->ncols-1; k >= 0; k--) {
-        double LUkk = 1.0 / MATD_EL(u, k, k);
+        double LUkk = (double) 1.0 / MATD_EL(u, k, k);
         for (int t = 0; t < b->ncols; t++)
             MATD_EL(x, k, t) *= LUkk;
 
@@ -3776,10 +3777,10 @@ matd_t *homography_compute(zarray_t *correspondences, int flags)
         float *c;
         zarray_get_volatile(correspondences, i, &c);
 
-        x_cx += c[0];
-        x_cy += c[1];
-        y_cx += c[2];
-        y_cy += c[3];
+        x_cx += (double) c[0];
+        x_cy += (double) c[1];
+        y_cx += (double) c[2];
+        y_cy += (double) c[3];
     }
 
     int sz = zarray_size(correspondences);
@@ -3798,10 +3799,10 @@ matd_t *homography_compute(zarray_t *correspondences, int flags)
         zarray_get_volatile(correspondences, i, &c);
 
         // (below world is "x", and image is "y")
-        double worldx = c[0] - x_cx;
-        double worldy = c[1] - x_cy;
-        double imagex = c[2] - y_cx;
-        double imagey = c[3] - y_cy;
+        double worldx = (double) c[0] - (double) x_cx;
+        double worldy = (double) c[1] - (double) x_cy;
+        double imagex = (double) c[2] - (double) y_cx;
+        double imagey = (double) c[3] - (double) y_cy;
 
         double a03 = -worldx;
         double a04 = -worldy;
@@ -4405,7 +4406,7 @@ int g2d_polygon_contains_point_ref(const zarray_t *poly, double q[2])
         last_theta = this_theta;
     }
 
-    return acc_theta > M_PI;
+    return acc_theta >(double) M_PI;
 }
 
 /*
@@ -9775,7 +9776,7 @@ int quad_segment_maxima(apriltag_detector_t *td, zarray_t *cluster, struct line_
 
         // XXX Tunable (though not super useful to change)
         double cutoff = 0.05;
-        int fsz = sqrt(-log(cutoff)*2*sigma*sigma) + 1;
+        int fsz = sqrt(-log(cutoff)*2*(float) (sigma*sigma)) + 1;
         fsz = 2*fsz + 1;
 
         // For default values of cutoff = 0.05, sigma = 3,
@@ -9791,7 +9792,7 @@ int quad_segment_maxima(apriltag_detector_t *td, zarray_t *cluster, struct line_
             double acc = 0;
 
             for (int i = 0; i < fsz; i++) {
-                acc += errs[(iy + i - fsz / 2 + sz) % sz] * f[i];
+                acc += errs[(iy + i - fsz / 2 + sz) % sz] * (double) f[i];
             }
             y[iy] = acc;
         }
@@ -9861,29 +9862,29 @@ int quad_segment_maxima(apriltag_detector_t *td, zarray_t *cluster, struct line_
 
             fit_line(lfps, sz, i0, i1, params01, &err01, &mse01);
 
-            if (mse01 > td->qtp.max_line_fit_mse)
+            if (mse01 > (double) td->qtp.max_line_fit_mse)
                 continue;
 
             for (int m2 = m1+1; m2 < nmaxima - 1; m2++) {
                 int i2 = maxima[m2];
 
                 fit_line(lfps, sz, i1, i2, params12, &err12, &mse12);
-                if (mse12 > td->qtp.max_line_fit_mse)
+                if (mse12 > (double) td->qtp.max_line_fit_mse)
                     continue;
 
                 double dot = params01[2]*params12[2] + params01[3]*params12[3];
-                if (fabs(dot) > max_dot)
+                if (fabs(dot) > (float) max_dot)
                     continue;
 
                 for (int m3 = m2+1; m3 < nmaxima; m3++) {
                     int i3 = maxima[m3];
 
                     fit_line(lfps, sz, i2, i3, params23, &err23, &mse23);
-                    if (mse23 > td->qtp.max_line_fit_mse)
+                    if (mse23 > (double) td->qtp.max_line_fit_mse)
                         continue;
 
                     fit_line(lfps, sz, i3, i0, params30, &err30, &mse30);
-                    if (mse30 > td->qtp.max_line_fit_mse)
+                    if (mse30 > (double) td->qtp.max_line_fit_mse)
                         continue;
 
                     double err = err01 + err12 + err23 + err30;
@@ -9899,13 +9900,13 @@ int quad_segment_maxima(apriltag_detector_t *td, zarray_t *cluster, struct line_
         }
     }
 
-    if (best_error == HUGE_VALF)
+    if (best_error == (double) HUGE_VALF)
         return 0;
 
     for (int i = 0; i < 4; i++)
         indices[i] = best_indices[i];
 
-    if (best_error / sz < td->qtp.max_line_fit_mse)
+    if (best_error / sz < (double) td->qtp.max_line_fit_mse)
         return 1;
     return 0;
 }
@@ -10071,8 +10072,8 @@ int fit_quad(apriltag_detector_t *td, image_u8_t *im, zarray_t *cluster, struct 
         if (0) {
             // we now undo our fixed-point arithmetic.
             double delta = 0.5;
-            double x = p->x * .5 + delta;
-            double y = p->y * .5 + delta;
+            double x = p->x * (double) 0.5 + delta;
+            double y = p->y * (double) 0.5 + delta;
             double W;
 
             for (int dy = -1; dy <= 1; dy++) {
@@ -10108,8 +10109,8 @@ int fit_quad(apriltag_detector_t *td, image_u8_t *im, zarray_t *cluster, struct 
         } else {
             // we now undo our fixed-point arithmetic.
             double delta = 0.5; // adjust for pixel center bias
-            double x = p->x * .5 + delta;
-            double y = p->y * .5 + delta;
+            double x = p->x * (double) .5 + (double) delta;
+            double y = p->y * (double) .5 + (double)  delta;
             int ix = x, iy = y;
             double W = 1;
 
@@ -10181,7 +10182,7 @@ int fit_quad(apriltag_detector_t *td, image_u8_t *im, zarray_t *cluster, struct 
             double err;
             fit_line(lfps, sz, i0, i1, lines[i], NULL, &err);
 
-            if (err > td->qtp.max_line_fit_mse) {
+            if (err > (double) td->qtp.max_line_fit_mse) {
                 res = 0;
                 goto finish;
             }
@@ -10254,7 +10255,7 @@ int fit_quad(apriltag_detector_t *td, image_u8_t *im, zarray_t *cluster, struct 
         }
         p = (length[0] + length[1] + length[2]) / 2;
 
-        area += sqrt(p*(p-length[0])*(p-length[1])*(p-length[2]));
+        area += (double) sqrt(p*(p-length[0])*(p-length[1])*(p-length[2]));
 
         // get area of triangle formed by points 2, 3, 0, 2
         for (int i = 0; i < 3; i++) {
@@ -10266,7 +10267,7 @@ int fit_quad(apriltag_detector_t *td, image_u8_t *im, zarray_t *cluster, struct 
         }
         p = (length[0] + length[1] + length[2]) / 2;
 
-        area += sqrt(p*(p-length[0])*(p-length[1])*(p-length[2]));
+        area += (double) sqrt(p*(p-length[0])*(p-length[1])*(p-length[2]));
 
         // we don't actually know the family yet (quad detection is generic.)
         // This threshold is based on a 6x6 tag (which is actually 8x8)
@@ -10291,17 +10292,17 @@ int fit_quad(apriltag_detector_t *td, image_u8_t *im, zarray_t *cluster, struct 
                                    quad->p[i2][0] - quad->p[i1][0]);
 
             double dtheta = theta0 - theta1;
-            if (dtheta < 0)
-                dtheta += 2*M_PI;
+            if (dtheta < (double) 0.0)
+                dtheta += (2*(double) M_PI);
 
-            if (dtheta < td->qtp.critical_rad || dtheta > (M_PI - td->qtp.critical_rad))
+            if (dtheta < (double) td->qtp.critical_rad || dtheta > (double) (M_PI - td->qtp.critical_rad))
                 res = 0;
 
             total += dtheta;
         }
 
         // looking for 2PI
-        if (total < 6.2 || total > 6.4) {
+        if (total < (double) 6.2 || total > (double) 6.4) {
             res = 0;
             goto finish;
         }
@@ -11110,7 +11111,7 @@ double quad_goodness(apriltag_family_t *family, image_u8_t *im, struct quad *qua
 
     int32_t W1 = 0, B1 = 0, Wn = 0, Bn = 0; // int64_t W1 = 0, B1 = 0, Wn = 0, Bn = 0;
 
-    float wsz = bit_size*white_border;
+    float wsz = bit_size*(double) white_border;
     float bsz = bit_size*family->black_border;
 
     matd_t *Hinv = quad->Hinv;
@@ -11123,12 +11124,12 @@ double quad_goodness(apriltag_family_t *family, image_u8_t *im, struct quad *qua
         // projections. Begin by evaluating the homogeneous position
         // [(xmin - .5f), y, 1]. Then, we'll update as we stride in
         // the +x direction.
-        double Hx = MATD_EL(Hinv, 0, 0) * (.5 + (int) xmin) +
-            MATD_EL(Hinv, 0, 1) * (y + .5) + MATD_EL(Hinv, 0, 2);
-        double Hy = MATD_EL(Hinv, 1, 0) * (.5 + (int) xmin) +
-            MATD_EL(Hinv, 1, 1) * (y + .5) + MATD_EL(Hinv, 1, 2);
-        double Hh = MATD_EL(Hinv, 2, 0) * (.5 + (int) xmin) +
-            MATD_EL(Hinv, 2, 1) * (y + .5) + MATD_EL(Hinv, 2, 2);
+        double Hx = MATD_EL(Hinv, 0, 0) * (double) (.5 + (int) xmin) +
+            MATD_EL(Hinv, 0, 1) * (double) (y + .5) + MATD_EL(Hinv, 0, 2);
+        double Hy = MATD_EL(Hinv, 1, 0) * (double) (.5 + (int) xmin) +
+            MATD_EL(Hinv, 1, 1) * (double) (y + .5) + MATD_EL(Hinv, 1, 2);
+        double Hh = MATD_EL(Hinv, 2, 0) * (double) (.5 + (int) xmin) +
+            MATD_EL(Hinv, 2, 1) * (double) (y + .5) + MATD_EL(Hinv, 2, 2);
 
         for (int x = xmin; x <= xmax;  x++) {
             // project the pixel center.
@@ -11256,8 +11257,8 @@ float quad_decode(apriltag_family_t *family, image_u8_t *im, struct quad *quad, 
             double tagx01 = (pattern[0] + i*pattern[2]) / (2*family->black_border + family->d);
             double tagy01 = (pattern[1] + i*pattern[3]) / (2*family->black_border + family->d);
 
-            double tagx = 2*(tagx01-0.5);
-            double tagy = 2*(tagy01-0.5);
+            double tagx = 2*(tagx01-(double) 0.5);
+            double tagy = 2*(tagy01-(double) 0.5);
 
             double px, py;
             homography_project(quad->H, tagx, tagy, &px, &py);
@@ -11305,8 +11306,8 @@ float quad_decode(apriltag_family_t *family, image_u8_t *im, struct quad *quad, 
         double tagy01 = (family->black_border + bity + 0.5) / (2*family->black_border + family->d);
 
         // scale to [-1, 1]
-        double tagx = 2*(tagx01-0.5);
-        double tagy = 2*(tagy01-0.5);
+        double tagx = 2*(tagx01-(double) 0.5);
+        double tagy = 2*(tagy01-(double) 0.5);
 
         double px, py;
         homography_project(quad->H, tagx, tagy, &px, &py);
@@ -11322,13 +11323,13 @@ float quad_decode(apriltag_family_t *family, image_u8_t *im, struct quad *quad, 
 
         int v = im->buf[iy*im->stride + ix];
 
-        double thresh = (graymodel_interpolate(&blackmodel, tagx, tagy) + graymodel_interpolate(&whitemodel, tagx, tagy)) / 2.0;
+        double thresh = (graymodel_interpolate(&blackmodel, tagx, tagy) + graymodel_interpolate(&whitemodel, tagx, tagy)) / (double) 2.0;
         if (v > thresh) {
-            white_score += (v - thresh);
+            white_score +=  (float) (v - thresh);
             white_score_count ++;
             rcode |= 1;
         } else {
-            black_score += (thresh - v);
+            black_score += (float) (thresh - v);
             black_score_count ++;
         }
 
@@ -11459,8 +11460,8 @@ static void refine_edges(apriltag_detector_t *td, image_u8_t *im_orig, struct qu
             // sampling *right* at the corners, since those points are
             // the least reliable.
             double alpha = (1.0 + s) / (nsamples + 1);
-            double x0 = alpha*quad->p[a][0] + (1-alpha)*quad->p[b][0];
-            double y0 = alpha*quad->p[a][1] + (1-alpha)*quad->p[b][1];
+            double x0 = alpha*(double) quad->p[a][0] + (1-alpha)*(double) quad->p[b][0];
+            double y0 = alpha*(double) quad->p[a][1] + (1-alpha)*(double) quad->p[b][1];
 
             // search along the normal to this line, looking at the
             // gradients along the way. We're looking for a strong
@@ -11479,7 +11480,7 @@ static void refine_edges(apriltag_detector_t *td, image_u8_t *im_orig, struct qu
             double range = 1.0 + 1;
 
             // XXX tunable step size.
-            for (double n = -range; n <= range; n +=  0.25) {
+            for (double n = -range; n <= range; n +=  (double) 0.25) {
                 // Because of the guaranteed winding order of the
                 // points in the quad, we will start inside the white
                 // portion of the quad and work our way outward.
