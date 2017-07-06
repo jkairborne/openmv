@@ -224,7 +224,7 @@ loop:   SWAPINIT(a, es);
 #define realloc(ptr, size) ({ void *_r = umm_realloc((ptr), (size)); if(!_r) fb_alloc_fail(); _r; })
 #define calloc(num, item_size) ({ void *_r = umm_calloc((num), (item_size)); if(!_r) fb_alloc_fail(); _r; })
 #define assert(expression)
-//#define double float
+#define double float
 #undef DBL_MIN
 #define DBL_MIN FLT_MIN
 #undef DBL_MAX
@@ -3023,14 +3023,24 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
     return res;
 }
 
-matd_t* matd_MP_pseudo_inverse(matd_svd_t* USV)
+matd_t *matd_MP_pseudo_inverse(matd_svd_t* USV)
 {
     //make the return matrix be the correct dimensions.
     matd_t *ret = matd_create(USV->V->nrows,USV->U->nrows);
-    matd_t *Splus = matd_create(USV->S->ncols,USV->S->nrows);
-    for (int i=0; i<Splus->nrows;i++)
+    matd_t *Splus = matd_create(USV->U->ncols,USV->V->ncols);
+    for (int i=0; i<Splus->ncols;i++)
     {
-        MATD_EL(Splus,i,i) = (fabs(MATD_EL(Splus,i,i)) < MATD_EPS) ? 0 : (1/MATD_EL(Splus,i,i));
+ /*       printf("values: %d %d", ((int) (10000*MATD_EL(USV->S,i,i))),((int) (10000*MATD_EPS)));
+        if (fabs(MATD_EL(USV->S,i,i)) < 0.001){
+            MATD_EL(Splus,i,i) = 0;
+            printf("in the if\n");
+        }
+        else {
+            MATD_EL(Splus,i,i) = 1/(MATD_EL(USV->S,i,i));
+            printf("in the else");
+        }
+*/
+        MATD_EL(Splus,i,i) = (fabs(MATD_EL(USV->S,i,i)) < 0.001) ? 0 : (1/MATD_EL(USV->S,i,i));
     }
 
 
@@ -3043,10 +3053,10 @@ matd_t* matd_MP_pseudo_inverse(matd_svd_t* USV)
         printf("\n");
     }
 
-    printf("S :\n");
+    printf("Splus :\n");
     for(int i=0;i<6;i++){
         for(int j=0;j<8;j++){
-            int dummy  = 10000*MATD_EL(USV->S,j,i);
+            int dummy  = 10000*MATD_EL(Splus,j,i);
             printf("%d ",dummy);
         }
         printf("\n");
@@ -3061,9 +3071,21 @@ matd_t* matd_MP_pseudo_inverse(matd_svd_t* USV)
         printf("\n");
     }
 
+    matd_t *tst2 = matd_identity(8);
+    matd_t *tst3 = matd_identity(8);
+//    ret = matd_op("M'*M",tst2,tst3);
+
+    ret = matd_op("M*M*M'", USV->V, Splus, USV->U);
+    printf("ret :\n");
+    for(int i=0;i<6;i++){
+        for(int j=0;j<8;j++){
+            int dummy  = 10000*MATD_EL(ret,i,j);
+            printf("%d ",dummy);
+        }
+        printf("\n");
+    }
 
 
-    ret = matd_op("M*M*M", USV->V, Splus, matd_transpose(USV->U));
 
     return ret;//
 }//end matd_MP_pseudo_inverse
@@ -11997,8 +12019,10 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
 
 //        double dt1[64] =  {1,2,3,4,5,6,7,8,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13,7,8,9,10,11,12,13,14,8,9,10,11,12,13,14,15};
 //        matd_t* rndm = matd_create_data(8,8,dt1);
-        matd_t* rndm = matd_MP_pseudo_inverse(&intofct);
-/*
+        matd_t *rndm = matd_MP_pseudo_inverse(&intofct);
+
+
+        /*
         printf("The pseudo-inverse: \n");
         for(int i=0;i<8;i++){
 
@@ -12011,15 +12035,16 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
         }//end for
 
 */
-        printf("PI :\n");
+        printf("PI2 :\n");
         for(int i=0;i<6;i++){
-            for(int j=0;j<6;j++){
+            for(int j=0;j<8;j++){
                 int dummy  = 10000*MATD_EL(rndm,i,j);
                 printf("%d ",dummy);
-                lnk_data.tst1[i][j] = MATD_EL(intofct.V,i,j);
+         //       lnk_data.tst1[i][j] = MATD_EL(intofct.V,i,j);
             }
             printf("\n");
         }
+        printf("\n\nShould be last line \n\n");
 
         lnk_data.x_translation = MATD_EL(pose, 0, 3);
         lnk_data.y_translation = MATD_EL(pose, 1, 3);
