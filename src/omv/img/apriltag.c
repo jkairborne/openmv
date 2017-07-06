@@ -217,14 +217,14 @@ loop:   SWAPINIT(a, es);
 #undef swap
 #undef vecswap
 
-
+//#define printf(format, ...)
 #define fprintf(format, ...)
 #define free(ptr) ({ umm_free(ptr); })
 #define malloc(size) ({ void *_r = umm_malloc(size); if(!_r) fb_alloc_fail(); _r; })
 #define realloc(ptr, size) ({ void *_r = umm_realloc((ptr), (size)); if(!_r) fb_alloc_fail(); _r; })
 #define calloc(num, item_size) ({ void *_r = umm_calloc((num), (item_size)); if(!_r) fb_alloc_fail(); _r; })
 #define assert(expression)
-#define double float
+//#define double float
 #undef DBL_MIN
 #define DBL_MIN FLT_MIN
 #undef DBL_MAX
@@ -1230,6 +1230,7 @@ typedef struct
  * row and column indexes. Suitable for both retrieval and assignment.
  */
 #define MATD_EL(m, row, col) (m)->data[((row)*(m)->ncols + (col))]
+//#define IMATD_EL(m, row, col) ((int) 10000*(m)->data[((row)*(m)->ncols + (col))])
 
 /**
  * Creates a double matrix with the given number of rows and columns (or a scalar
@@ -1695,7 +1696,7 @@ TYPE matd_get(const matd_t *m, int row, int col)
     assert(col >= 0);
     assert(col < m->ncols);
 
-    return MATD_EL(m, row, col);
+    return ((float) (m)->data[((row)*(m)->ncols + (col))]);
 }
 
 // row and col are zero-based
@@ -3024,14 +3025,43 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
 
 matd_t* matd_MP_pseudo_inverse(matd_svd_t* USV)
 {
-    matd_t *ret = matd_create(USV->V->nrows,USV->V->nrows);
+    //make the return matrix be the correct dimensions.
+    matd_t *ret = matd_create(USV->V->nrows,USV->U->nrows);
     matd_t *Splus = matd_create(USV->S->ncols,USV->S->nrows);
-    printf("IN THE MP_pseudo_inverse");
     for (int i=0; i<Splus->nrows;i++)
     {
         MATD_EL(Splus,i,i) = (fabs(MATD_EL(Splus,i,i)) < MATD_EPS) ? 0 : (1/MATD_EL(Splus,i,i));
-        //printf("testing 1");
     }
+
+
+    printf("U :\n");
+    for(int i=0;i<8;i++){
+        for(int j=0;j<8;j++){
+            int dummy  = 10000*MATD_EL(USV->U,i,j);
+            printf("%d ",dummy);
+        }
+        printf("\n");
+    }
+
+    printf("S :\n");
+    for(int i=0;i<6;i++){
+        for(int j=0;j<8;j++){
+            int dummy  = 10000*MATD_EL(USV->S,j,i);
+            printf("%d ",dummy);
+        }
+        printf("\n");
+    }
+    printf("V :\n");
+    for(int i=0;i<6;i++){
+        for(int j=0;j<6;j++){
+            int dummy  = 10000*MATD_EL(USV->V,i,j);
+            printf("%d ",dummy);
+
+        }
+        printf("\n");
+    }
+
+
 
     ret = matd_op("M*M*M", USV->V, Splus, matd_transpose(USV->U));
 
@@ -11604,7 +11634,6 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
         printf("apriltag.c: No tag families enabled.");
         return s;
     }
-    printf("detecting me some apriltags");
 
     ///////////////////////////////////////////////////////////
     // Step 1. Detect quads according to requested image decimation
@@ -11841,8 +11870,6 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
     umm_init_x(((fb_avail() - fb_alloc_need) / resolution) * resolution);
     apriltag_detector_t *td = apriltag_detector_create();
 
-    printf("Apriltag finally working? \n");
-
     if (families & TAG16H5) {
         apriltag_detector_add_family(td, (apriltag_family_t *) &tag16h5);
     }
@@ -11967,23 +11994,32 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
         tst1 = matd_create_data(8,6,dt1);
         matd_svd_t intofct = matd_svd(tst1);
 
-        for(int i=0;i<8;i++){
-            for(int j=0;j<6;j++){
-                lnk_data.tst1[i][j] = MATD_EL(intofct.V,i,j);
-                printf("In the function");
-            }
-        }
 
 //        double dt1[64] =  {1,2,3,4,5,6,7,8,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13,7,8,9,10,11,12,13,14,8,9,10,11,12,13,14,15};
 //        matd_t* rndm = matd_create_data(8,8,dt1);
         matd_t* rndm = matd_MP_pseudo_inverse(&intofct);
-
+/*
+        printf("The pseudo-inverse: \n");
         for(int i=0;i<8;i++){
+
             for(int j=0;j<8;j++){
+                int dummy  = 10000*MATD_EL(intofct.U,i,j);
+                printf("%d ",dummy);
                 lnk_data.mp_PI[i][j] = MATD_EL(intofct.U,i,j);
             }//end for
+                printf("\n");
         }//end for
 
+*/
+        printf("PI :\n");
+        for(int i=0;i<6;i++){
+            for(int j=0;j<6;j++){
+                int dummy  = 10000*MATD_EL(rndm,i,j);
+                printf("%d ",dummy);
+                lnk_data.tst1[i][j] = MATD_EL(intofct.V,i,j);
+            }
+            printf("\n");
+        }
 
         lnk_data.x_translation = MATD_EL(pose, 0, 3);
         lnk_data.y_translation = MATD_EL(pose, 1, 3);
