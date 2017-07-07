@@ -529,6 +529,8 @@ Q(TAG25H9)
 Q(TAG36H10)
 Q(TAG36H11)
 Q(ARTOOLKIT)
+Q(IBVS_vc)
+Q(desired_pts)
 
 // Find DataMatrices
 Q(find_datamatrices)

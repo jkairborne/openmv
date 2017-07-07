@@ -2588,8 +2588,8 @@ typedef struct py_apriltag_obj {
     mp_obj_t x, y, w, h, id, family, cx, cy, rotation, decision_margin, hamming, goodness;
     mp_obj_t x_translation, y_translation, z_translation;
     mp_obj_t x_rotation, y_rotation, z_rotation;
-    mp_obj_t mp_PI;
-    mp_obj_t tst1;
+    mp_obj_t IBVS_vc;
+    mp_obj_t desired_pts;
 } py_apriltag_obj_t;
 
 static void py_apriltag_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind)
@@ -2663,8 +2663,8 @@ static mp_obj_t py_apriltag_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t va
 }
 
 mp_obj_t py_apriltag_corners(mp_obj_t self_in) { return ((py_apriltag_obj_t *) self_in)->corners; }
-mp_obj_t py_apriltag_mp_PI(mp_obj_t self_in) { return ((py_apriltag_obj_t *) self_in)->mp_PI; }
-mp_obj_t py_apriltag_tst1(mp_obj_t self_in) { return ((py_apriltag_obj_t *) self_in)->tst1; }
+mp_obj_t py_apriltag_IBVS_vc(mp_obj_t self_in) { return ((py_apriltag_obj_t *) self_in)->IBVS_vc; }
+mp_obj_t py_apriltag_desired_pts(mp_obj_t self_in) { return ((py_apriltag_obj_t *) self_in)->desired_pts; }
 mp_obj_t py_apriltag_rect(mp_obj_t self_in)
 {
     return mp_obj_new_tuple(4, (mp_obj_t []) {((py_apriltag_obj_t *) self_in)->x,
@@ -2693,8 +2693,8 @@ mp_obj_t py_apriltag_y_rotation(mp_obj_t self_in) { return ((py_apriltag_obj_t *
 mp_obj_t py_apriltag_z_rotation(mp_obj_t self_in) { return ((py_apriltag_obj_t *) self_in)->z_rotation; }
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_corners_obj, py_apriltag_corners);
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_mp_PI_obj, py_apriltag_mp_PI);
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_tst1_obj, py_apriltag_tst1);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_IBVS_vc_obj, py_apriltag_IBVS_vc);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_desired_pts_obj, py_apriltag_desired_pts);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_rect_obj, py_apriltag_rect);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_x_obj, py_apriltag_x);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_y_obj, py_apriltag_y);
@@ -2717,8 +2717,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_z_rotation_obj, py_apriltag_z_rotat
 
 STATIC const mp_rom_map_elem_t py_apriltag_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_corners), MP_ROM_PTR(&py_apriltag_corners_obj) },
-    { MP_ROM_QSTR(MP_QSTR_mp_PI), MP_ROM_PTR(&py_apriltag_mp_PI_obj) },
-    { MP_ROM_QSTR(MP_QSTR_tst1), MP_ROM_PTR(&py_apriltag_tst1_obj) },
+    { MP_ROM_QSTR(MP_QSTR_IBVS_vc), MP_ROM_PTR(&py_apriltag_IBVS_vc_obj) },
+    { MP_ROM_QSTR(MP_QSTR_desired_pts), MP_ROM_PTR(&py_apriltag_desired_pts_obj) },
     { MP_ROM_QSTR(MP_QSTR_rect), MP_ROM_PTR(&py_apriltag_rect_obj) },
     { MP_ROM_QSTR(MP_QSTR_x), MP_ROM_PTR(&py_apriltag_x_obj) },
     { MP_ROM_QSTR(MP_QSTR_y), MP_ROM_PTR(&py_apriltag_y_obj) },
@@ -2803,27 +2803,22 @@ static mp_obj_t py_image_find_apriltags(uint n_args, const mp_obj_t *args, mp_ma
         o->x_rotation = mp_obj_new_float(lnk_data.x_rotation);
         o->y_rotation = mp_obj_new_float(lnk_data.y_rotation);
         o->z_rotation = mp_obj_new_float(lnk_data.z_rotation);
-//8x8
-        o->mp_PI = mp_obj_new_tuple(8, (mp_obj_t [])
-            {mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.mp_PI[0][0]), mp_obj_new_int(lnk_data.mp_PI[1][0]),mp_obj_new_int(lnk_data.mp_PI[2][0]),mp_obj_new_int(lnk_data.mp_PI[3][0]),mp_obj_new_int(lnk_data.mp_PI[4][0]),mp_obj_new_int(lnk_data.mp_PI[5][0]),mp_obj_new_int(lnk_data.mp_PI[6][0]),mp_obj_new_int(lnk_data.mp_PI[7][0])}),
-             mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.mp_PI[0][1]), mp_obj_new_int(lnk_data.mp_PI[1][1]),mp_obj_new_int(lnk_data.mp_PI[2][1]),mp_obj_new_int(lnk_data.mp_PI[3][1]),mp_obj_new_int(lnk_data.mp_PI[4][1]),mp_obj_new_int(lnk_data.mp_PI[5][1]),mp_obj_new_int(lnk_data.mp_PI[6][1]),mp_obj_new_int(lnk_data.mp_PI[7][1])}),
-             mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.mp_PI[0][2]), mp_obj_new_int(lnk_data.mp_PI[1][2]),mp_obj_new_int(lnk_data.mp_PI[2][2]),mp_obj_new_int(lnk_data.mp_PI[3][2]),mp_obj_new_int(lnk_data.mp_PI[4][2]),mp_obj_new_int(lnk_data.mp_PI[5][2]),mp_obj_new_int(lnk_data.mp_PI[6][2]),mp_obj_new_int(lnk_data.mp_PI[7][2])}),
-             mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.mp_PI[0][3]), mp_obj_new_int(lnk_data.mp_PI[1][3]),mp_obj_new_int(lnk_data.mp_PI[2][3]),mp_obj_new_int(lnk_data.mp_PI[3][3]),mp_obj_new_int(lnk_data.mp_PI[4][3]),mp_obj_new_int(lnk_data.mp_PI[5][3]),mp_obj_new_int(lnk_data.mp_PI[6][3]),mp_obj_new_int(lnk_data.mp_PI[7][3])}),
-             mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.mp_PI[0][4]), mp_obj_new_int(lnk_data.mp_PI[1][4]),mp_obj_new_int(lnk_data.mp_PI[2][4]),mp_obj_new_int(lnk_data.mp_PI[3][4]),mp_obj_new_int(lnk_data.mp_PI[4][4]),mp_obj_new_int(lnk_data.mp_PI[5][4]),mp_obj_new_int(lnk_data.mp_PI[6][4]),mp_obj_new_int(lnk_data.mp_PI[7][4])}),
-             mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.mp_PI[0][5]), mp_obj_new_int(lnk_data.mp_PI[1][5]),mp_obj_new_int(lnk_data.mp_PI[2][5]),mp_obj_new_int(lnk_data.mp_PI[3][5]),mp_obj_new_int(lnk_data.mp_PI[4][5]),mp_obj_new_int(lnk_data.mp_PI[5][5]),mp_obj_new_int(lnk_data.mp_PI[6][5]),mp_obj_new_int(lnk_data.mp_PI[7][5])}),
-             mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.mp_PI[0][6]), mp_obj_new_int(lnk_data.mp_PI[1][6]),mp_obj_new_int(lnk_data.mp_PI[2][6]),mp_obj_new_int(lnk_data.mp_PI[3][6]),mp_obj_new_int(lnk_data.mp_PI[4][6]),mp_obj_new_int(lnk_data.mp_PI[5][6]),mp_obj_new_int(lnk_data.mp_PI[6][6]),mp_obj_new_int(lnk_data.mp_PI[7][6])}),
-             mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.mp_PI[0][7]), mp_obj_new_int(lnk_data.mp_PI[1][7]),mp_obj_new_int(lnk_data.mp_PI[2][7]),mp_obj_new_int(lnk_data.mp_PI[3][7]),mp_obj_new_int(lnk_data.mp_PI[4][7]),mp_obj_new_int(lnk_data.mp_PI[5][7]),mp_obj_new_int(lnk_data.mp_PI[6][7]),mp_obj_new_int(lnk_data.mp_PI[7][7])})});
-     //8x6
-        o->tst1 = mp_obj_new_tuple(8, (mp_obj_t [])
-            {mp_obj_new_tuple(6,  (mp_obj_t []) {mp_obj_new_int(lnk_data.tst1[0][0]), mp_obj_new_int(lnk_data.tst1[0][1]),mp_obj_new_int(lnk_data.tst1[0][2]),mp_obj_new_int(lnk_data.tst1[0][3]),mp_obj_new_int(lnk_data.tst1[0][4]),mp_obj_new_int(lnk_data.tst1[0][5])}),
-             mp_obj_new_tuple(6,  (mp_obj_t []) {mp_obj_new_int(lnk_data.tst1[1][0]), mp_obj_new_int(lnk_data.tst1[1][1]),mp_obj_new_int(lnk_data.tst1[1][2]),mp_obj_new_int(lnk_data.tst1[1][3]),mp_obj_new_int(lnk_data.tst1[1][4]),mp_obj_new_int(lnk_data.tst1[1][5])}),
-             mp_obj_new_tuple(6,  (mp_obj_t []) {mp_obj_new_int(lnk_data.tst1[2][0]), mp_obj_new_int(lnk_data.tst1[2][1]),mp_obj_new_int(lnk_data.tst1[2][2]),mp_obj_new_int(lnk_data.tst1[2][3]),mp_obj_new_int(lnk_data.tst1[2][4]),mp_obj_new_int(lnk_data.tst1[2][5])}),
-             mp_obj_new_tuple(6,  (mp_obj_t []) {mp_obj_new_int(lnk_data.tst1[3][0]), mp_obj_new_int(lnk_data.tst1[3][1]),mp_obj_new_int(lnk_data.tst1[3][2]),mp_obj_new_int(lnk_data.tst1[3][3]),mp_obj_new_int(lnk_data.tst1[3][4]),mp_obj_new_int(lnk_data.tst1[3][5])}),
-             mp_obj_new_tuple(6,  (mp_obj_t []) {mp_obj_new_int(lnk_data.tst1[4][0]), mp_obj_new_int(lnk_data.tst1[4][1]),mp_obj_new_int(lnk_data.tst1[4][2]),mp_obj_new_int(lnk_data.tst1[4][3]),mp_obj_new_int(lnk_data.tst1[4][4]),mp_obj_new_int(lnk_data.tst1[4][5])}),
-             mp_obj_new_tuple(6,  (mp_obj_t []) {mp_obj_new_int(lnk_data.tst1[5][0]), mp_obj_new_int(lnk_data.tst1[5][1]),mp_obj_new_int(lnk_data.tst1[5][2]),mp_obj_new_int(lnk_data.tst1[5][3]),mp_obj_new_int(lnk_data.tst1[5][4]),mp_obj_new_int(lnk_data.tst1[5][5])}),
-             mp_obj_new_tuple(6,  (mp_obj_t []) {mp_obj_new_int(lnk_data.tst1[6][0]), mp_obj_new_int(lnk_data.tst1[6][1]),mp_obj_new_int(lnk_data.tst1[6][2]),mp_obj_new_int(lnk_data.tst1[6][3]),mp_obj_new_int(lnk_data.tst1[6][4]),mp_obj_new_int(lnk_data.tst1[6][5])}),
-             mp_obj_new_tuple(6,  (mp_obj_t []) {mp_obj_new_int(lnk_data.tst1[7][0]), mp_obj_new_int(lnk_data.tst1[7][1]),mp_obj_new_int(lnk_data.tst1[7][2]),mp_obj_new_int(lnk_data.tst1[7][3]),mp_obj_new_int(lnk_data.tst1[7][4]),mp_obj_new_int(lnk_data.tst1[7][5])})});
-
+        o->IBVS_vc = mp_obj_new_tuple(6, (mp_obj_t [])
+           { mp_obj_new_float(lnk_data.IBVS_vc[0]),
+            mp_obj_new_float(lnk_data.IBVS_vc[1]),
+            mp_obj_new_float(lnk_data.IBVS_vc[2]),
+            mp_obj_new_float(lnk_data.IBVS_vc[3]),
+            mp_obj_new_float(lnk_data.IBVS_vc[4]),
+            mp_obj_new_float(lnk_data.IBVS_vc[5])});
+        o->desired_pts = mp_obj_new_tuple(8, (mp_obj_t [])
+           { mp_obj_new_float(lnk_data.desired_pts[0]),
+            mp_obj_new_float(lnk_data.desired_pts[1]),
+            mp_obj_new_float(lnk_data.desired_pts[2]),
+            mp_obj_new_float(lnk_data.desired_pts[3]),
+            mp_obj_new_float(lnk_data.desired_pts[4]),
+            mp_obj_new_float(lnk_data.desired_pts[5]),
+            mp_obj_new_float(lnk_data.desired_pts[6]),
+             mp_obj_new_float(lnk_data.desired_pts[7])});
 /*6x8        o->tst1 = mp_obj_new_tuple(6, (mp_obj_t [])
             {mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.tst1[0][0]), mp_obj_new_int(lnk_data.tst1[1][0]),mp_obj_new_int(lnk_data.tst1[2][0]),mp_obj_new_int(lnk_data.tst1[3][0]),mp_obj_new_int(lnk_data.tst1[4][0]),mp_obj_new_int(lnk_data.tst1[5][0]),mp_obj_new_int(lnk_data.tst1[6][0]),mp_obj_new_int(lnk_data.tst1[7][0])}),
              mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.tst1[0][1]), mp_obj_new_int(lnk_data.tst1[1][1]),mp_obj_new_int(lnk_data.tst1[2][1]),mp_obj_new_int(lnk_data.tst1[3][1]),mp_obj_new_int(lnk_data.tst1[4][1]),mp_obj_new_int(lnk_data.tst1[5][1]),mp_obj_new_int(lnk_data.tst1[6][1]),mp_obj_new_int(lnk_data.tst1[7][1])}),
@@ -3546,6 +3541,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(py_image_find_line_segments_obj, 1, py_image_f
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(py_image_find_qrcodes_obj, 1, py_image_find_qrcodes);
 #ifdef OMV_ENABLE_APRILTAGS
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(py_image_find_apriltags_obj, 1, py_image_find_apriltags);
+//STATIC MP_DEFINE_CONST_FUN_OBJ_KW(py_image_set_desired_pts_obj, 2, py_image_draw_line);
 #endif
 #ifdef OMV_ENABLE_DATAMATRICES
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(py_image_find_datamatrices_obj, 1, py_image_find_datamatrices);
