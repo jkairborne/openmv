@@ -12,6 +12,9 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
+#define XRESH 80 // X resolution of 160, so half is 80
+#define YRESH 60 // Y resolution of 120, so half is 60
+
 /* Copyright (C) 2013-2016, The Regents of The University of Michigan.
 All rights reserved.
 
@@ -1554,6 +1557,7 @@ matd_t *matd_MP_pseudo_inverse(matd_svd_t *USV);
 
 matd_t *matd_ibvs_vc(matd_t *pseudo_inverse, matd_t *image_pts);
 
+matd_t *ibvs_des_pts_calc(double x, double y);
 matd_t *matd_Le_calc(matd_t *image_pts, double z_est);
 #define MATD_SVD_NO_WARNINGS 1
     matd_svd_t matd_svd_flags(matd_t *A, int flags);
@@ -2722,7 +2726,7 @@ static matd_svd_t matd_svd_tall(matd_t *A, int flags)
     // maxiters used to be smaller to prevent us from looping forever,
     // but this doesn't seem to happen any more with our more stable
     // svd22 implementation.
-    int maxiters = 1UL << 15; // 1UL << 30;
+    int maxiters = 1UL << 8; // 1UL << 30;
     assert(maxiters > 0); // reassure clang
     int iter;
 
@@ -3072,7 +3076,23 @@ matd_t *matd_MP_pseudo_inverse(matd_svd_t* USV)
 
     return ret;//
 }//end matd_MP_pseudo_inverse
+matd_t *ibvs_des_pts_calc(double x, double y)
+{
+    double despts[8];
 
+    despts[0] = XRESH - x;
+    despts[1] = YRESH - y; // top left corner first
+    despts[2] = XRESH + x;
+    despts[3] = YRESH - y; // top right corner second
+    despts[4] = XRESH + x;
+    despts[5] = YRESH + y; // bottom right corner third
+    despts[6] = XRESH - x;
+    despts[7] = YRESH + y;
+
+    matd_t *ret = matd_create_data(8,1,despts);
+
+    return ret;
+}
 
 matd_t *matd_ibvs_vc(matd_t *pseudo_inverse, matd_t *image_pts){
     //Calculate the desired IBVS velocity given image points in matd_t format, and the pseudo-inverse
@@ -12089,8 +12109,18 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
                               lnk_data.corners[3].y \
                              };
         matd_t *current_pts = matd_create_data(8,1,fill_pts);
-        printf("current points: \n");
-        print_MATD_int(current_pts);
+ //       printf("current points: \n");
+ //       print_MATD_int(current_pts);
+
+
+        lnk_data.desired_pts[0] = 60;
+        lnk_data.desired_pts[1] = 25;
+        lnk_data.desired_pts[2] = 120;
+        lnk_data.desired_pts[3] = 25;
+        lnk_data.desired_pts[4] = 120;
+        lnk_data.desired_pts[5] = 85;
+        lnk_data.desired_pts[6] = 60;
+        lnk_data.desired_pts[7] = 85;
 
         double despts[8] = {lnk_data.desired_pts[0],\
         lnk_data.desired_pts[1],\
@@ -12104,8 +12134,8 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
 
         matd_t *desired_pts = matd_create_data(8,1,despts);
 
-        printf("desired_pts: \n");
-        print_MATD_int(desired_pts);
+      //  printf("desired_pts about to be called: \n");
+      //  print_MATD_int(desired_pts);
 
         matd_t *delta_s = matd_subtract(current_pts,desired_pts);
 
@@ -12122,10 +12152,10 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
  //       printf("pseudoinverse: \n");
   //      print_MATD_int_10000(ps_inverse);
 
-        matd_t *v_c_ibvs = matd_ibvs_vc(ps_inverse,current_pts);
+        matd_t *v_c_ibvs = matd_ibvs_vc(ps_inverse,delta_s);
       //  matd_t *rndm = matd_MP_pseudo_inverse(&intofct);
- //       printf("v_c_ibvs: \n");
-   //     print_MATD_int_10000(v_c_ibvs);
+        printf("v_c_ibvs: \n");
+        print_MATD_int_10000(v_c_ibvs);
 
 
         lnk_data.IBVS_vc[0] = (float) MATD_EL(v_c_ibvs,0,0);
@@ -12134,15 +12164,6 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
         lnk_data.IBVS_vc[3] = (float) MATD_EL(v_c_ibvs,3,0);
         lnk_data.IBVS_vc[4] = (float) MATD_EL(v_c_ibvs,4,0);
         lnk_data.IBVS_vc[5] = (float) MATD_EL(v_c_ibvs,5,0);
-        lnk_data.desired_pts[0] = 60;
-        lnk_data.desired_pts[1] = 25;
-        lnk_data.desired_pts[2] = 120;
-        lnk_data.desired_pts[3] = 25;
-        lnk_data.desired_pts[4] = 120;
-        lnk_data.desired_pts[5] = 85;
-        lnk_data.desired_pts[6] = 60;
-        lnk_data.desired_pts[7] = 85;
-
         lnk_data.x_translation = MATD_EL(pose, 0, 3);
         lnk_data.y_translation = MATD_EL(pose, 1, 3);
         lnk_data.z_translation = MATD_EL(pose, 2, 3);

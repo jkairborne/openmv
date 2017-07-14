@@ -2661,6 +2661,19 @@ static mp_obj_t py_apriltag_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t va
     }
     return MP_OBJ_NULL; // op not supported
 }
+// TODOuint n_args, const mp_obj_t *args
+static mp_obj_t py_apriltag_ibvs_calc(uint n_args, const mp_obj_t *args)
+{
+    int rollint = mp_obj_get_int(args[0]);
+    int pitchint = mp_obj_get_int(args[1]);
+    int arg_r  = mp_obj_get_int(args[3]);
+    int res = rollint+pitchint+arg_r+res;
+    printf("here in the ibvs_calc function");
+  //  printf("In the ibvs_calc fct");
+    //    int arg_c  = py_helper_lookup_color(kw_args, -1); // white
+    return mp_const_none;
+}
+
 
 mp_obj_t py_apriltag_corners(mp_obj_t self_in) { return ((py_apriltag_obj_t *) self_in)->corners; }
 mp_obj_t py_apriltag_IBVS_vc(mp_obj_t self_in) { return ((py_apriltag_obj_t *) self_in)->IBVS_vc; }
@@ -2692,6 +2705,7 @@ mp_obj_t py_apriltag_x_rotation(mp_obj_t self_in) { return ((py_apriltag_obj_t *
 mp_obj_t py_apriltag_y_rotation(mp_obj_t self_in) { return ((py_apriltag_obj_t *) self_in)->y_rotation; }
 mp_obj_t py_apriltag_z_rotation(mp_obj_t self_in) { return ((py_apriltag_obj_t *) self_in)->z_rotation; }
 
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(py_apriltag_ibvs_calc_obj, 5, 5, py_apriltag_ibvs_calc);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_corners_obj, py_apriltag_corners);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_IBVS_vc_obj, py_apriltag_IBVS_vc);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_desired_pts_obj, py_apriltag_desired_pts);
@@ -2716,6 +2730,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_y_rotation_obj, py_apriltag_y_rotat
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(py_apriltag_z_rotation_obj, py_apriltag_z_rotation);
 
 STATIC const mp_rom_map_elem_t py_apriltag_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_ibvs_calc), MP_ROM_PTR(&py_apriltag_ibvs_calc_obj) },
     { MP_ROM_QSTR(MP_QSTR_corners), MP_ROM_PTR(&py_apriltag_corners_obj) },
     { MP_ROM_QSTR(MP_QSTR_IBVS_vc), MP_ROM_PTR(&py_apriltag_IBVS_vc_obj) },
     { MP_ROM_QSTR(MP_QSTR_desired_pts), MP_ROM_PTR(&py_apriltag_desired_pts_obj) },
@@ -3541,7 +3556,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(py_image_find_line_segments_obj, 1, py_image_f
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(py_image_find_qrcodes_obj, 1, py_image_find_qrcodes);
 #ifdef OMV_ENABLE_APRILTAGS
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(py_image_find_apriltags_obj, 1, py_image_find_apriltags);
-//STATIC MP_DEFINE_CONST_FUN_OBJ_KW(py_image_set_desired_pts_obj, 2, py_image_draw_line);
 #endif
 #ifdef OMV_ENABLE_DATAMATRICES
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(py_image_find_datamatrices_obj, 1, py_image_find_datamatrices);

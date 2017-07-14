@@ -476,6 +476,7 @@ Q(find_qrcodes)
 // duplicate Q(roi)
 // QRCode Object
 Q(qrcode)
+Q(ibvs_calc)
 Q(corners)
 // duplicate Q(rect)
 // duplicate Q(x)
