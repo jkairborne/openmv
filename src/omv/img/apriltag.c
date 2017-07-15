@@ -11993,22 +11993,8 @@ void py_image_ibvs_calc(float *out, int rollint, int pitchint, float* actCorners
 {
     double z_est = 0.5;
 
-    printf("received in the py_image_ibvs_calc fct of apriltag.c: ");
-    printf("roll, pitch:  %d %d\n actual corners: ", rollint,pitchint);
-    for(int i=0;i<8;i++) {
-        printf("%d",(int) (actCorners[i]));
-        printf(" ");}
-    printf("desCorners: ");
-    for(int i=0;i<8;i++) {
-        printf("%d",(int) (desCorners[i]));
-        printf(" ");}
     matd_t *rotm_rp = matd_rp_rotm(rollint,pitchint);
     matd_t *virtCorners = matd_create(8,1);
-
-    printf("rotation matrix: \n");
-    print_MATD_int_10000(rotm_rp);
-
-    printf("cos 3.14: %d, cosf 45: %d\n", (int) (1000*cosf(M_PI)),(int) (1000*cosf(M_PI/4)));
 
     for (int i =0; i<4;i++){
         int uo = (int) actCorners[2*i];
@@ -12025,16 +12011,7 @@ void py_image_ibvs_calc(float *out, int rollint, int pitchint, float* actCorners
 
     matd_t *desiredCorners = matd_create_data(8,1,desCorners);
     matd_t *currentCorners = matd_create_data(8,1,actCorners);
-
-    printf("\n desiredCorners: ");
-    print_MATD_int_10000(desiredCorners);
-    printf("\n currentCorners: ");
-    print_MATD_int_10000(currentCorners);
-
     matd_t *delta_s = matd_subtract(virtCorners,desiredCorners);
-    printf("\n delta_s: ");
-    print_MATD_int_10000(delta_s);
-    // need z est
 
     matd_t *Le = matd_Le_calc(currentCorners,z_est);
 
@@ -12050,13 +12027,6 @@ void py_image_ibvs_calc(float *out, int rollint, int pitchint, float* actCorners
     for(int i=0;i<8;i++){
         out[i+6] = MATD_EL(virtCorners,i,0);
     }
-
-    printf("Le:\n");
-    print_MATD_int_10000(Le);
-    printf("Le+:\n");
-    print_MATD_int_10000(ps_inverse);
-    printf("v_c:\n");
-    print_MATD_int_10000(v_c_ibvs);
 
     //TODO: DESTROY STUFF HERE?
 }

@@ -2681,10 +2681,7 @@ static mp_obj_t py_apriltag_ibvs_calc(uint n_args, const mp_obj_t *args)
         desiPts[i] = mp_obj_get_float(arg_vec2[i]);
     }
 
-    printf("before the call to apriltag fct:\n");
-
     py_image_ibvs_calc(out,rollint,pitchint,crntPts,desiPts);
-    printf("after the call to apriltag fct:\n");
 
     mp_obj_t tuple[2];
     tuple[0] = mp_obj_new_list(0, NULL);
