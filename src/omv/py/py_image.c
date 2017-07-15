@@ -2664,14 +2664,40 @@ static mp_obj_t py_apriltag_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t va
 // TODOuint n_args, const mp_obj_t *args
 static mp_obj_t py_apriltag_ibvs_calc(uint n_args, const mp_obj_t *args)
 {
-    int rollint = mp_obj_get_int(args[0]);
-    int pitchint = mp_obj_get_int(args[1]);
-    int arg_r  = mp_obj_get_int(args[3]);
-    int res = rollint+pitchint+arg_r+res;
-    printf("here in the ibvs_calc function");
-  //  printf("In the ibvs_calc fct");
-    //    int arg_c  = py_helper_lookup_color(kw_args, -1); // white
-    return mp_const_none;
+    int rollint = mp_obj_get_int(args[1]);
+    int pitchint = mp_obj_get_int(args[2]);
+
+    mp_obj_t *arg_vec;
+    mp_obj_get_array_fixed_n(args[3], 8, &arg_vec);
+    mp_obj_t *arg_vec2;
+    mp_obj_get_array_fixed_n(args[4], 8, &arg_vec2);
+
+    float crntPts[8];
+    float desiPts[8];
+    float out[14];
+
+    for (int i=0; i<8; i++){
+        crntPts[i] = mp_obj_get_float(arg_vec[i]);
+        desiPts[i] = mp_obj_get_float(arg_vec2[i]);
+    }
+
+    printf("before the call to apriltag fct:\n");
+
+    py_image_ibvs_calc(out,rollint,pitchint,crntPts,desiPts);
+    printf("after the call to apriltag fct:\n");
+
+    mp_obj_t tuple[2];
+    tuple[0] = mp_obj_new_list(0, NULL);
+    tuple[1] = mp_obj_new_list(0, NULL);
+
+    for(int i=0;i<6;i++){
+        mp_obj_list_append(tuple[0],mp_obj_new_float(out[i]));
+    }
+    for(int i=0;i<8;i++){
+        mp_obj_list_append(tuple[1],mp_obj_new_float(out[i+6]));
+    }
+
+    return mp_obj_new_tuple(2, tuple);
 }
 
 
@@ -4240,6 +4266,7 @@ static const mp_map_elem_t globals_dict_table[] = {
     {MP_OBJ_NEW_QSTR(MP_QSTR_TAG36H10),            MP_OBJ_NEW_SMALL_INT(TAG36H10)},
     {MP_OBJ_NEW_QSTR(MP_QSTR_TAG36H11),            MP_OBJ_NEW_SMALL_INT(TAG36H11)},
     {MP_OBJ_NEW_QSTR(MP_QSTR_ARTOOLKIT),           MP_OBJ_NEW_SMALL_INT(ARTOOLKIT)},
+
 #endif
 #ifdef OMV_ENABLE_BARCODES
     {MP_OBJ_NEW_QSTR(MP_QSTR_EAN2),                MP_OBJ_NEW_SMALL_INT(BARCODE_EAN2)},

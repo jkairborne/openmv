@@ -1553,6 +1553,11 @@ matd_svd_t matd_svd(matd_t *A);
 
 void print_MATD_int_10000(matd_t *input);
 void print_MATD_int(matd_t *input);
+
+matd_t *calc3DCoords(float u, float v, float z_est);
+matd_t *matd_rp_rotm(int rollint, int pitchint);
+matd_t *matd_rp_transfm(int rollint, int pitchint, float x, float y, float z);
+
 matd_t *matd_MP_pseudo_inverse(matd_svd_t *USV);
 
 matd_t *matd_ibvs_vc(matd_t *pseudo_inverse, matd_t *image_pts);
@@ -3056,6 +3061,32 @@ void print_MATD_int(matd_t *input){
     }
 }
 
+matd_t *calc3DCoords(float u, float v, float z_est){
+    double data[3] = {u*z_est, v*z_est, z_est};
+    matd_t *res = matd_create_data(3,1,data);
+    return res;
+}
+
+matd_t *matd_rp_rotm(int rollint, int pitchint){
+    float roll = rollint/300.0;
+    float pitch = pitchint/300.0;
+
+    float data[9] = {1,0,0,0,1,0,0,0,1};
+    matd_t *res = matd_create_data(3,3,data);
+
+    return res;
+}
+
+matd_t *matd_rp_transfm(int rollint, int pitchint, float x, float y, float z){
+    float roll = rollint/300.0;
+    float pitch = pitchint/300.0;
+
+    float data[16] = { cosf(pitch),0,sin(pitch),x,0,1,0,y, 0,0,1,z,0,0,0,1};
+
+    matd_t *res = matd_create_data(3,3,data);
+
+    return res;
+}
 
 matd_t *matd_MP_pseudo_inverse(matd_svd_t* USV)
 {
@@ -11958,6 +11989,80 @@ void apriltag_detections_destroy(zarray_t *detections)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void py_image_ibvs_calc(float *out, int rollint, int pitchint, float* actCorners, float* desCorners)
+{
+    double z_est = 0.5;
+
+    printf("received in the py_image_ibvs_calc fct of apriltag.c: ");
+    printf("roll, pitch:  %d %d\n actual corners: ", rollint,pitchint);
+    for(int i=0;i<8;i++) {
+        printf("%d",(int) (actCorners[i]));
+        printf(" ");}
+    printf("desCorners: ");
+    for(int i=0;i<8;i++) {
+        printf("%d",(int) (desCorners[i]));
+        printf(" ");}
+    matd_t *rotm_rp = matd_rp_rotm(rollint,pitchint);
+    matd_t *virtCorners = matd_create(8,1);
+
+    printf("rotation matrix: \n");
+    print_MATD_int_10000(rotm_rp);
+
+    printf("cos 3.14: %d, cosf 45: %d\n", (int) (1000*cosf(M_PI)),(int) (1000*cosf(M_PI/4)));
+
+    for (int i =0; i<4;i++){
+        int uo = (int) actCorners[2*i];
+        int vo = (int) actCorners[2*i+1];
+
+        matd_t *currPt = calc3DCoords(uo,vo,z_est);
+
+        matd_t *virtCoords = matd_multiply(rotm_rp,currPt);
+
+        MATD_EL(virtCorners,2*i,0) = (MATD_EL(virtCoords,0,0)/MATD_EL(virtCoords,2,0));
+        MATD_EL(virtCorners,2*i+1,0) = (MATD_EL(virtCoords,1,0)/MATD_EL(virtCoords,2,0));
+    }
+
+
+    matd_t *desiredCorners = matd_create_data(8,1,desCorners);
+    matd_t *currentCorners = matd_create_data(8,1,actCorners);
+
+    printf("\n desiredCorners: ");
+    print_MATD_int_10000(desiredCorners);
+    printf("\n currentCorners: ");
+    print_MATD_int_10000(currentCorners);
+
+    matd_t *delta_s = matd_subtract(virtCorners,desiredCorners);
+    printf("\n delta_s: ");
+    print_MATD_int_10000(delta_s);
+    // need z est
+
+    matd_t *Le = matd_Le_calc(currentCorners,z_est);
+
+    matd_svd_t Le_SVD = matd_svd(Le);
+    matd_t *ps_inverse = matd_MP_pseudo_inverse(&Le_SVD);
+
+    matd_t *v_c_ibvs = matd_ibvs_vc(ps_inverse,delta_s);
+
+    for(int i=0;i<6;i++){
+        out[i] = MATD_EL(v_c_ibvs,i,0);
+    }
+    // Now populate with the virtual image points
+    for(int i=0;i<8;i++){
+        out[i+6] = MATD_EL(virtCorners,i,0);
+    }
+
+    printf("Le:\n");
+    print_MATD_int_10000(Le);
+    printf("Le+:\n");
+    print_MATD_int_10000(ps_inverse);
+    printf("v_c:\n");
+    print_MATD_int_10000(v_c_ibvs);
+
+    //TODO: DESTROY STUFF HERE?
+}
+
+
+
 void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_families_t families,
                           float fx, float fy, float cx, float cy)
 {
@@ -12139,8 +12244,8 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
 
         matd_t *delta_s = matd_subtract(current_pts,desired_pts);
 
-        printf("current-desired: \n");
-        print_MATD_int(delta_s);
+//        printf("current-desired: \n");
+  //      print_MATD_int(delta_s);
 
         matd_t *Le = matd_Le_calc(current_pts,0.3);
   //      printf("Le: \n");
@@ -12154,8 +12259,8 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
 
         matd_t *v_c_ibvs = matd_ibvs_vc(ps_inverse,delta_s);
       //  matd_t *rndm = matd_MP_pseudo_inverse(&intofct);
-        printf("v_c_ibvs: \n");
-        print_MATD_int_10000(v_c_ibvs);
+ //       printf("v_c_ibvs: \n");
+   //     print_MATD_int_10000(v_c_ibvs);
 
 
         lnk_data.IBVS_vc[0] = (float) MATD_EL(v_c_ibvs,0,0);

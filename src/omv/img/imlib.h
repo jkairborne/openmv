@@ -1152,6 +1152,8 @@ void imlib_find_line_segments(list_t *out, image_t *ptr, rectangle_t *roi, unsig
 void imlib_find_qrcodes(list_t *out, image_t *ptr, rectangle_t *roi);
 void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_families_t families,
                           float fx, float fy, float cx, float cy);
+void py_image_ibvs_calc(float *out, int rollint, int pitchint, float* actCorners, float* desCorners);
+
 void imlib_find_datamatrices(list_t *out, image_t *ptr, rectangle_t *roi, int effort);
 void imlib_find_barcodes(list_t *out, image_t *ptr, rectangle_t *roi);
 
