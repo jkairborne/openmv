@@ -12,8 +12,10 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
-#define XRESH 80 // X resolution of 160, so half is 80
-#define YRESH 60 // Y resolution of 120, so half is 60
+#define C_X (160 * 0.5)// X resolution of 160, so half is 80
+#define C_Y (120 * 0.5) // Y resolution of 120, so half is 60
+#define F_X ((2.8 / 3.984) * 160) // find_apriltags defaults to this if not set
+#define F_Y ((2.8 / 2.952) * 120) // find_apriltags defaults to this if not set
 
 /* Copyright (C) 2013-2016, The Regents of The University of Michigan.
 All rights reserved.
@@ -1561,6 +1563,9 @@ matd_t *matd_rp_transfm(int rollint, int pitchint, float x, float y, float z);
 matd_t *matd_MP_pseudo_inverse(matd_svd_t *USV);
 
 matd_t *matd_ibvs_vc(matd_t *pseudo_inverse, matd_t *image_pts);
+
+float matd_calc_z_est(matd_t *image_pts);
+float calc_z_est(float *image_pts);
 
 matd_t *ibvs_des_pts_calc(double x, double y);
 matd_t *matd_Le_calc(matd_t *image_pts, double z_est);
@@ -3111,19 +3116,55 @@ matd_t *ibvs_des_pts_calc(double x, double y)
 {
     double despts[8];
 
-    despts[0] = XRESH - x;
-    despts[1] = YRESH - y; // top left corner first
-    despts[2] = XRESH + x;
-    despts[3] = YRESH - y; // top right corner second
-    despts[4] = XRESH + x;
-    despts[5] = YRESH + y; // bottom right corner third
-    despts[6] = XRESH - x;
-    despts[7] = YRESH + y;
+    despts[0] = C_X - x;
+    despts[1] = C_Y - y; // top left corner first
+    despts[2] = C_X + x;
+    despts[3] = C_Y - y; // top right corner second
+    despts[4] = C_X + x;
+    despts[5] = C_Y + y; // bottom right corner third
+    despts[6] = C_X - x;
+    despts[7] = C_Y + y;
 
     matd_t *ret = matd_create_data(8,1,despts);
 
     return ret;
 }
+
+
+float matd_calc_z_est(matd_t *image_pts){
+    assert(image_pts != NULL);
+    assert(matd_is_vector(image_pts));
+
+    int lenimpt = image_pts->nrows*image_pts->ncols;
+    float img_pts[lenimpt];
+
+    for(int i=0;i<lenimpt;i++){
+        img_pts[i] = MATD_EL(image_pts,i,0);
+    }
+    float z_est = calc_z_est(img_pts);
+
+    return z_est;
+}
+
+float calc_z_est(float *image_pts){
+    float bsln = 0.24; //24cm
+    float delx_1 = image_pts[0] - image_pts[4];
+    float dely_1 = image_pts[1] - image_pts[5];
+
+    float delx_2 = image_pts[2] - image_pts[6];
+    float dely_2 = image_pts[3] - image_pts[7];
+
+    float dist1 = sqrt(delx_1*delx_1 + dely_1*dely_1);
+    float dist2 = sqrt(delx_2*delx_2 + dely_2*dely_2);
+    float avg_dist = (dist1+dist2)/2;
+
+    float z_est = bsln*F_X/avg_dist;
+
+    printf("distance(*1000): %d", (int) (z_est*1000));
+
+    return z_est;
+}
+
 
 matd_t *matd_ibvs_vc(matd_t *pseudo_inverse, matd_t *image_pts){
     //Calculate the desired IBVS velocity given image points in matd_t format, and the pseudo-inverse
@@ -11991,7 +12032,7 @@ void apriltag_detections_destroy(zarray_t *detections)
 
 void py_image_ibvs_calc(float *out, int rollint, int pitchint, float* actCorners, float* desCorners)
 {
-    double z_est = 0.5;
+    double z_est = calc_z_est(actCorners);
 
     matd_t *rotm_rp = matd_rp_rotm(rollint,pitchint);
     matd_t *virtCorners = matd_create(8,1);
@@ -12174,144 +12215,14 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
 
         matd_t *pose = homography_to_pose(det->H, -fx, fy, cx, cy);
 
-        double fill_pts[8] = {lnk_data.corners[0].x, \
-                              lnk_data.corners[0].y, \
-                              lnk_data.corners[1].x, \
-                              lnk_data.corners[1].y, \
-                              lnk_data.corners[2].x, \
-                              lnk_data.corners[2].y, \
-                              lnk_data.corners[3].x, \
-                              lnk_data.corners[3].y \
-                             };
-        matd_t *current_pts = matd_create_data(8,1,fill_pts);
- //       printf("current points: \n");
- //       print_MATD_int(current_pts);
-
-
-        lnk_data.desired_pts[0] = 60;
-        lnk_data.desired_pts[1] = 25;
-        lnk_data.desired_pts[2] = 120;
-        lnk_data.desired_pts[3] = 25;
-        lnk_data.desired_pts[4] = 120;
-        lnk_data.desired_pts[5] = 85;
-        lnk_data.desired_pts[6] = 60;
-        lnk_data.desired_pts[7] = 85;
-
-        double despts[8] = {lnk_data.desired_pts[0],\
-        lnk_data.desired_pts[1],\
-        lnk_data.desired_pts[2],\
-        lnk_data.desired_pts[3],\
-        lnk_data.desired_pts[4],\
-        lnk_data.desired_pts[5],\
-        lnk_data.desired_pts[6],\
-        lnk_data.desired_pts[7]};
-
-
-        matd_t *desired_pts = matd_create_data(8,1,despts);
-
-      //  printf("desired_pts about to be called: \n");
-      //  print_MATD_int(desired_pts);
-
-        matd_t *delta_s = matd_subtract(current_pts,desired_pts);
-
-//        printf("current-desired: \n");
-  //      print_MATD_int(delta_s);
-
-        matd_t *Le = matd_Le_calc(current_pts,0.3);
-  //      printf("Le: \n");
-   //     print_MATD_int_10000(Le);
-
-        matd_svd_t Le_SVD = matd_svd(Le);
-        matd_t *ps_inverse = matd_MP_pseudo_inverse(&Le_SVD);
-
- //       printf("pseudoinverse: \n");
-  //      print_MATD_int_10000(ps_inverse);
-
-        matd_t *v_c_ibvs = matd_ibvs_vc(ps_inverse,delta_s);
-      //  matd_t *rndm = matd_MP_pseudo_inverse(&intofct);
- //       printf("v_c_ibvs: \n");
-   //     print_MATD_int_10000(v_c_ibvs);
-
-
-        lnk_data.IBVS_vc[0] = (float) MATD_EL(v_c_ibvs,0,0);
-        lnk_data.IBVS_vc[1] = (float) MATD_EL(v_c_ibvs,1,0);
-        lnk_data.IBVS_vc[2] = (float) MATD_EL(v_c_ibvs,2,0);
-        lnk_data.IBVS_vc[3] = (float) MATD_EL(v_c_ibvs,3,0);
-        lnk_data.IBVS_vc[4] = (float) MATD_EL(v_c_ibvs,4,0);
-        lnk_data.IBVS_vc[5] = (float) MATD_EL(v_c_ibvs,5,0);
         lnk_data.x_translation = MATD_EL(pose, 0, 3);
         lnk_data.y_translation = MATD_EL(pose, 1, 3);
         lnk_data.z_translation = MATD_EL(pose, 2, 3);
         lnk_data.x_rotation = fast_atan2f(MATD_EL(pose, 2, 1), MATD_EL(pose, 2, 2));
         lnk_data.y_rotation = fast_atan2f(-MATD_EL(pose, 2, 0), fast_sqrtf(sq(MATD_EL(pose, 2, 1)) + sq(MATD_EL(pose, 2, 2))));
         lnk_data.z_rotation = -fast_atan2f(MATD_EL(pose, 1, 0), MATD_EL(pose, 0, 0));
-  //      for(int j=0;j<6;j++){
-    //        lnk_data.IBVS_vc[i][j] = MATD_EL(,i,j);
-     //   }//end for
-
 
         matd_destroy(pose);
-        matd_destroy(v_c_ibvs);
-        matd_destroy(ps_inverse);
-        matd_destroy(Le);
-       // matd_destroy(Le_SVD);
-        //free(fill_pts);
-
-
-
-//        double dt1[48] = {1,2,3,4,5,6,7,8,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13};
-        double dt1[48] = {1,2,3,4,5,6,2,3,4,5,6,7,3,4,5,6,7,8,4,5,6,7,8,9,5,6,7,8,9,10,6,7,8,9,10,11,7,8,9,10,11,12,8,9,10,11,12,13};
-        matd_t* tst1;
-        tst1 = matd_create_data(8,6,dt1);
-        matd_svd_t intofct = matd_svd(tst1);
-
-
-//        double dt1[64] =  {1,2,3,4,5,6,7,8,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,10,4,5,6,7,8,9,10,11,5,6,7,8,9,10,11,12,6,7,8,9,10,11,12,13,7,8,9,10,11,12,13,14,8,9,10,11,12,13,14,15};
-//        matd_t* rndm = matd_create_data(8,8,dt1);
-        matd_t *rndm = matd_MP_pseudo_inverse(&intofct);
-
-
-        /*
-        printf("The pseudo-inverse: \n");
-        for(int i=0;i<8;i++){
-
-            for(int j=0;j<8;j++){
-                int dummy  = 10000*MATD_EL(intofct.U,i,j);
-                printf("%d ",dummy);
-                lnk_data.mp_PI[i][j] = MATD_EL(intofct.U,i,j);
-            }//end for
-                printf("\n");
-        }//end for
-
-
-        printf("PI2 :\n");
-        for(int i=0;i<6;i++){
-            for(int j=0;j<8;j++){
-                int dummy  = 10000*MATD_EL(rndm,i,j);
-                printf("%d ",dummy);
-         //       lnk_data.tst1[i][j] = MATD_EL(intofct.V,i,j);
-            }
-            printf("\n");
-        }
-        */
- //       double dt2[8] = {1,1,1,1,1,1,1,1};
-  //      matd_t *ibvsPts = matd_create_data(8,1,dt2);
-
-
-//        printf("pseudo_inverse1: \n");
-  //      print_MATD_int_10000(rndm);
-
-//        printf("imagePts1: \n");
- //       print_MATD_int_10000(ibvsPts);
-
-     //   matd_t *res2 = matd_ibvs_vc(rndm, ibvsPts);
-
-   //     printf("After fct: \n");
- //       print_MATD_int_10000(res2);
-
-
- //       printf("\n\nShould be last line \n\n");
-
 
         list_push_back(out, &lnk_data);
 

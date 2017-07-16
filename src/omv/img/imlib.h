@@ -923,8 +923,6 @@ typedef struct find_apriltags_list_lnk_data {
     float goodness, decision_margin;
     float x_translation, y_translation, z_translation;
     float x_rotation, y_rotation, z_rotation;
-    float IBVS_vc[6];
-    float desired_pts[8];
 } find_apriltags_list_lnk_data_t;
 
 typedef struct find_datamatrices_list_lnk_data {
