@@ -2664,8 +2664,8 @@ static mp_obj_t py_apriltag_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t va
 // TODOuint n_args, const mp_obj_t *args
 static mp_obj_t py_apriltag_ibvs_calc(uint n_args, const mp_obj_t *args)
 {
-    int rollint = mp_obj_get_int(args[1]);
-    int pitchint = mp_obj_get_int(args[2]);
+    float roll = mp_obj_get_float(args[1]);
+    float pitch = mp_obj_get_float(args[2]);
 
     mp_obj_t *arg_vec;
     mp_obj_get_array_fixed_n(args[3], 8, &arg_vec);
@@ -2681,7 +2681,7 @@ static mp_obj_t py_apriltag_ibvs_calc(uint n_args, const mp_obj_t *args)
         desiPts[i] = mp_obj_get_float(arg_vec2[i]);
     }
 
-    py_image_ibvs_calc(out,rollint,pitchint,crntPts,desiPts);
+    py_image_ibvs_calc(out,roll,pitch,crntPts,desiPts);
 
     mp_obj_t tuple[2];
     tuple[0] = mp_obj_new_list(0, NULL);
@@ -2841,22 +2841,6 @@ static mp_obj_t py_image_find_apriltags(uint n_args, const mp_obj_t *args, mp_ma
         o->x_rotation = mp_obj_new_float(lnk_data.x_rotation);
         o->y_rotation = mp_obj_new_float(lnk_data.y_rotation);
         o->z_rotation = mp_obj_new_float(lnk_data.z_rotation);
-        o->IBVS_vc = mp_obj_new_tuple(6, (mp_obj_t [])
-           { mp_obj_new_float(lnk_data.IBVS_vc[0]),
-            mp_obj_new_float(lnk_data.IBVS_vc[1]),
-            mp_obj_new_float(lnk_data.IBVS_vc[2]),
-            mp_obj_new_float(lnk_data.IBVS_vc[3]),
-            mp_obj_new_float(lnk_data.IBVS_vc[4]),
-            mp_obj_new_float(lnk_data.IBVS_vc[5])});
-        o->desired_pts = mp_obj_new_tuple(8, (mp_obj_t [])
-           { mp_obj_new_float(lnk_data.desired_pts[0]),
-            mp_obj_new_float(lnk_data.desired_pts[1]),
-            mp_obj_new_float(lnk_data.desired_pts[2]),
-            mp_obj_new_float(lnk_data.desired_pts[3]),
-            mp_obj_new_float(lnk_data.desired_pts[4]),
-            mp_obj_new_float(lnk_data.desired_pts[5]),
-            mp_obj_new_float(lnk_data.desired_pts[6]),
-             mp_obj_new_float(lnk_data.desired_pts[7])});
 /*6x8        o->tst1 = mp_obj_new_tuple(6, (mp_obj_t [])
             {mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.tst1[0][0]), mp_obj_new_int(lnk_data.tst1[1][0]),mp_obj_new_int(lnk_data.tst1[2][0]),mp_obj_new_int(lnk_data.tst1[3][0]),mp_obj_new_int(lnk_data.tst1[4][0]),mp_obj_new_int(lnk_data.tst1[5][0]),mp_obj_new_int(lnk_data.tst1[6][0]),mp_obj_new_int(lnk_data.tst1[7][0])}),
              mp_obj_new_tuple(8,  (mp_obj_t []) {mp_obj_new_int(lnk_data.tst1[0][1]), mp_obj_new_int(lnk_data.tst1[1][1]),mp_obj_new_int(lnk_data.tst1[2][1]),mp_obj_new_int(lnk_data.tst1[3][1]),mp_obj_new_int(lnk_data.tst1[4][1]),mp_obj_new_int(lnk_data.tst1[5][1]),mp_obj_new_int(lnk_data.tst1[6][1]),mp_obj_new_int(lnk_data.tst1[7][1])}),

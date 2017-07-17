@@ -1557,7 +1557,7 @@ void print_MATD_int_10000(matd_t *input);
 void print_MATD_int(matd_t *input);
 
 matd_t *calc3DCoords(float u, float v, float z_est);
-matd_t *matd_rp_rotm(int rollint, int pitchint);
+matd_t *matd_rp_rotm(float roll, float pitch);
 matd_t *matd_rp_transfm(int rollint, int pitchint, float x, float y, float z);
 
 matd_t *matd_MP_pseudo_inverse(matd_svd_t *USV);
@@ -3067,18 +3067,18 @@ void print_MATD_int(matd_t *input){
 }
 
 matd_t *calc3DCoords(float u, float v, float z_est){
-    double data[3] = {u*z_est, v*z_est, z_est};
+    double data[3] = {u*z_est/F_X, v*z_est/F_Y, z_est};
     matd_t *res = matd_create_data(3,1,data);
     return res;
 }
 
-matd_t *matd_rp_rotm(int rollint, int pitchint){
-    float roll = rollint/300.0;
-    float pitch = pitchint/300.0;
-
-    float data[9] = {1,0,0,0,1,0,0,0,1};
+matd_t *matd_rp_rotm(float roll, float pitch){
+    printf("roll, pitch: %d %d \n",(int)roll,(int)pitch);
+    printf("cos, sin, for roll then pitch: %d %d %d %d\n", (int)(1000*cos(roll)),(int)(1000*sin(roll)),(int)(1000*cos(pitch)),(int)(1000*sin(pitch)));
+    float data[9] = {cos(roll),0,-sin(roll),-sin(roll)*sin(pitch),cos(pitch),-sin(pitch)*cos(roll),cos(pitch)*sin(roll),sin(pitch),cos(roll)*cos(pitch)};
     matd_t *res = matd_create_data(3,3,data);
-
+    printf("rp mat:\n");
+    print_MATD_int(res);
     return res;
 }
 
@@ -12030,25 +12030,24 @@ void apriltag_detections_destroy(zarray_t *detections)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void py_image_ibvs_calc(float *out, int rollint, int pitchint, float* actCorners, float* desCorners)
+void py_image_ibvs_calc(float *out, float roll, float pitch, float* actCorners, float* desCorners)
 {
-    double z_est = calc_z_est(actCorners);
+    double z_est = 0.5;//calc_z_est(actCorners);
 
-    matd_t *rotm_rp = matd_rp_rotm(rollint,pitchint);
+    matd_t *rotm_rp = matd_rp_rotm(roll,pitch);
     matd_t *virtCorners = matd_create(8,1);
 
     for (int i =0; i<4;i++){
-        int uo = (int) actCorners[2*i];
-        int vo = (int) actCorners[2*i+1];
+        int u = (int) actCorners[2*i];
+        int v = (int) actCorners[2*i+1];
 
-        matd_t *currPt = calc3DCoords(uo,vo,z_est);
+        matd_t *currPt = calc3DCoords(u-C_X,v-C_Y,z_est);
 
         matd_t *virtCoords = matd_multiply(rotm_rp,currPt);
 
-        MATD_EL(virtCorners,2*i,0) = (MATD_EL(virtCoords,0,0)/MATD_EL(virtCoords,2,0));
-        MATD_EL(virtCorners,2*i+1,0) = (MATD_EL(virtCoords,1,0)/MATD_EL(virtCoords,2,0));
+        MATD_EL(virtCorners,2*i,0) = (F_X*MATD_EL(virtCoords,0,0)/MATD_EL(virtCoords,2,0));
+        MATD_EL(virtCorners,2*i+1,0) = (F_Y*MATD_EL(virtCoords,1,0)/MATD_EL(virtCoords,2,0));
     }
-
 
     matd_t *desiredCorners = matd_create_data(8,1,desCorners);
     matd_t *currentCorners = matd_create_data(8,1,actCorners);
